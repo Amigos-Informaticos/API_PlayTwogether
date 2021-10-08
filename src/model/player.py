@@ -5,9 +5,9 @@ from src.model import Status
 class Player:
 
     def __init__(self):
-        self.name = None
+        self.nickname = None
         self.gender = None
-        self.age = None
+        self.birthday = None
         self.status = None
         self.isModerator = None
         self.isVerified = None
@@ -16,9 +16,9 @@ class Player:
         self.player_id = None
 
     def instantiate_hashmap_to_register(self, hash_player_received: dict):
-        self.name = hash_player_received["name"]
+        self.nickname = hash_player_received["nickname"]
         self.gender = hash_player_received["gender"]
-        self.age = hash_player_received["age"]
+        self.birthday = hash_player_received["birthday"]
         self.status = 1
         self.isModerator = False
         self.isVerified = False
@@ -28,9 +28,9 @@ class Player:
     def sign_up(self) -> bool:
         registered = False
         conexion = EasyConnection()
-        query = "INSERT INTO player (name, gender, age, status, isModerator, isVerified, password, email) VALUES " \
+        query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email) VALUES " \
                 "(%s, %s, %s, %s, %s, %s,  %s, %s);"
-        values = [self.name, self.gender, self.age, self.status, self.isModerator, self.isVerified, self.password,
+        values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified, self.password,
                   self.email]
         conexion.send_query(query, values)
         registered = True
@@ -45,3 +45,6 @@ class Player:
         id_recuperado = resultado [0]["player_id"]
         self.player_id = id_recuperado
         return id_recuperado
+
+
+
