@@ -1,7 +1,8 @@
 from http import HTTPStatus
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, session
 
 from src.model.player import Player
+from src.services.Auth import Auth
 
 rutas_player = Blueprint("rutas_player", __name__)
 
@@ -37,9 +38,14 @@ def sign_in():
             result = player.login()
 
             if result == HTTPStatus.OK:
+                player.get_id()
+                token = Auth.generate_token(player)
+                session.permanent = True
+                session["token"] = token
+
                 #generar token
 
-                player_json = player.make_to_json_login()
+                player_json = player.make_to_json_login(token)
                 response = Response(
                     player_json,
                     status=HTTPStatus.OK,
@@ -48,4 +54,10 @@ def sign_in():
             else:
                 response = Response(status=result)
 
+    return response
+
+@rutas_player.route("/admin", methods=["POST"])
+@Auth.administrator_permission()
+def is_admin():
+    response = Response(status=HTTPStatus.OK)
     return response
