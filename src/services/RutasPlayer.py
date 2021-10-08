@@ -6,7 +6,7 @@ from src.model.player import Player
 rutas_player = Blueprint("rutas_player", __name__)
 
 @rutas_player.route("/players", methods = ["POST"])
-def registrar_player():
+def sign_up():
     print(request)
     player_recibido = request.json
     respuesta = Response(status=HTTPStatus.BAD_REQUEST)
@@ -23,3 +23,29 @@ def registrar_player():
             else:
                 respuesta = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
     return respuesta
+
+@rutas_player.route("/login", methods= ["POST"])
+def sign_in():
+    print(request)
+    player_received = request.json
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    values_required = {"email", "password"}
+    if player_received is not None:
+        if all(key in player_received for key in values_required):
+            player = Player()
+            player.instantiate_hashmap_to_login(player_received)
+            result = player.login()
+
+            if result == HTTPStatus.OK:
+                #generar token
+
+                player_json = player.make_to_json_login()
+                response = Response(
+                    player_json,
+                    status=HTTPStatus.OK,
+                    mimetype="application/json"
+                )
+            else:
+                response = Response(status=result)
+
+    return response
