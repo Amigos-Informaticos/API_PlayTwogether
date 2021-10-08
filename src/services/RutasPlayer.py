@@ -43,7 +43,6 @@ def sign_in():
                 session.permanent = True
                 session["token"] = token
 
-                #generar token
 
                 player_json = player.make_to_json_login(token)
                 response = Response(
