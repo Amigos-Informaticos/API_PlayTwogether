@@ -32,11 +32,12 @@ class Player:
         self.email = hash_player_received["email"]
         self.password = hash_player_received["password"]
 
-    def make_to_json_login(self):
+    def make_to_json_login(self, token):
         return json.dumps({
             "nickname" : self.nickname,
             "isModerator" : self.isModerator,
-            "email" : self.email
+            "email" : self.email,
+            "token": token
         })
 
     def sign_up(self) -> bool:
@@ -55,7 +56,7 @@ class Player:
         query = "SELECT player_id FROM player WHERE email = %s;"
         values = [self.email]
         conexion = EasyConnection()
-        resultado = conexion.send_query(query,values)
+        resultado = conexion.select(query,values)
         id_recuperado = resultado [0]["player_id"]
         self.player_id = id_recuperado
         return id_recuperado
