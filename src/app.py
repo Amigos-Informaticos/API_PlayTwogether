@@ -1,3 +1,4 @@
+from datetime import timedelta
 from flask import Flask
 from services.RutasPlayer import rutas_player
 from flask_cors import CORS
@@ -5,6 +6,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 cors = CORS(app)
 app.register_blueprint(rutas_player)
+app.config["SECRET_KEY"] = "beethoven"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=120)
 
 
 @app.route('/')
