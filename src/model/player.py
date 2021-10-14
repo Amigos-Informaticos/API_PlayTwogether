@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, date
 from http import HTTPStatus
 
 from src.data_access.EasyConnection import EasyConnection
@@ -32,48 +33,95 @@ class Player:
         self.email = hash_player_received["email"]
         self.password = hash_player_received["password"]
 
-    def make_to_json_login(self, token):
+    def instantiate_hashmap_to_update(self, hashplayer_received: dict):
+        self.email = hashplayer_received["email"]
+        self.password = hashplayer_received["password"]
+        self.nickname = hashplayer_received["nickname"]
+        self.gender = hashplayer_received["gender"]
+
+    def make_to_json_login(self, token, age):
         return json.dumps({
-            "nickname" : self.nickname,
-            "isModerator" : self.isModerator,
-            "email" : self.email,
-            "token": token
+            "nickname": self.nickname,
+            "isModerator": self.isModerator,
+            "email": self.email,
+            "token": token,
+            "age": age,
+            "gender": self.gender
         })
 
     def sign_up(self) -> bool:
-        registered = False
-        conexion = EasyConnection()
-        query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email) VALUES " \
-                "(%s, %s, %s, %s, %s, %s,  %s, %s);"
-        values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified, self.password,
-                  self.email]
-        conexion.send_query(query, values)
-        registered = True
-        return registered
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        if not self.is_registered():
+            query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email) VALUES " \
+                    "(%s, %s, %s, %s, %s, %s,  %s, %s);"
+            values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
+                      self.password,
+                      self.email]
+            self.send_query(query, values)
+            status = HTTPStatus.CREATED
+        else:
+            status = HTTPStatus.CONFLICT
+        return status
 
     def get_id(self) -> int:
-        id_recuperado =-1
+        id_recovered = -1
         query = "SELECT player_id FROM player WHERE email = %s;"
         values = [self.email]
-        conexion = EasyConnection()
-        resultado = conexion.select(query,values)
-        id_recuperado = resultado [0]["player_id"]
+        resultado = self.select(query, values)
+        id_recuperado = resultado[0]["player_id"]
         self.player_id = id_recuperado
         return id_recuperado
 
     def login(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        conexion = EasyConnection()
         query = "SELECT * FROM player WHERE email = %s AND password = %s ;"
         values = [self.email, self.password]
-        result = conexion.select(query, values)
+        result = self.select(query,values)
         if len(result) > 0:
             self.nickname = result[0]["nickname"]
             self.isModerator = result[0]["isModerator"]
+            self.birthday = result[0]["birthday"]
+            self.gender = result[0]["gender"]
             status = HTTPStatus.OK
         else:
             status = HTTPStatus.NOT_FOUND
         return status
 
+    def is_registered(self) -> bool:
+        is_registered = False
+        query = "SELECT * FROM player WHERE email = %s;"
+        values = [self.email]
+        result = self.select(query, values)
+        if len(result) > 0:
+            is_registered = True
+        return is_registered
 
+    def update(self) -> int:
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        if self.is_registered():
+            query = "UPDATE player SET nickname = %s, gender = %s, password = %s WHERE email = %s;"
+            values = [self.nickname, self.gender, self.password, self.email]
+            if self.send_query(query, values):
+                status =HTTPStatus.OK
+        else:
+            status = HTTPStatus.NOT_FOUND
+        return status
 
+    @staticmethod
+    def select(query, values):
+        connection = EasyConnection()
+        result = connection.select(query, values)
+        return result
+
+    @staticmethod
+    def send_query(query, values):
+        sent = False
+        connection = EasyConnection()
+        connection.send_query(query, values)
+        sent = True
+        return sent
+
+    def calculate_age(self):
+        today = date.today()
+        born = self.birthday
+        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))

@@ -38,8 +38,6 @@ class Auth:
 
         return update_wrapper(verify_auth, operation)
 
-
-    #metodo creado para verificar que sea moderador
     @staticmethod
     def administrator_permission():
         def decorator(operation):
@@ -50,45 +48,36 @@ class Auth:
                     if token_values["isModerator"] == "1":
                         response = operation(*args, **kwargs)
                     else:
-                        response =Response(status=HTTPStatus.FORBIDDEN)
+                        response = Response(status=HTTPStatus.FORBIDDEN)
                 else:
-                    response = Response(status= HTTPStatus.FORBIDDEN)
+                    response = Response(status=HTTPStatus.FORBIDDEN)
                 return response
+
             return update_wrapper(verify_is_administrator, operation)
+
         return decorator
 
-    # Editado en ["type"]
     @staticmethod
-    def requires_role(role: Any):
+    def requires_authentication():
         def decorator(operation):
-            def verify_role(*args, **kwargs):
+            def verify_authentication(*args, **kwargs):
                 token = request.headers.get("token")
+                player_received = request.json
                 if token is not None:
                     values = Auth.decode_token(token)
-                    if str(values["type"]) == str(role):
-                        response = operation(*args, **kwargs)
+                    if values is not None:
+                        if str(values["email"]) == str(player_received["email"]):
+                            response = operation(*args, **kwargs)
+                        else:
+                            response = Response(status=HTTPStatus.FORBIDDEN)
                     else:
                         response = Response(status=HTTPStatus.FORBIDDEN)
                 else:
                     response = Response(status=HTTPStatus.FORBIDDEN)
                 return response
 
-            return update_wrapper(verify_role, operation)
-
+            return update_wrapper(verify_authentication, operation)
         return decorator
-
-    #Validar si se puede reutilizar
-    @staticmethod
-    def verificar_autor(idPublicador, token):
-        response = None
-        if token is not None:
-            try:
-                values = Auth.decode_token(token)
-                response = str(values["id_miembro"]) == str(idPublicador)
-            except InvalidToken:
-                pass
-            return response
-
 
     @staticmethod
     def generate_token(player: Player) -> str:
@@ -97,7 +86,7 @@ class Auth:
         timestamp = datetime.now().strftime("%H:%M:%S")
         value: str = player.email + "/"
         value += player.password + "/"
-        value += str (int(player.isModerator)) + "/"
+        value += str(int(player.isModerator)) + "/"
         value += str(int(player.player_id)) + "/"
         value += timestamp
         token_value = Auth.encode(value, Auth.secret_password)
@@ -106,17 +95,20 @@ class Auth:
         return token_value
 
     @staticmethod
-    def decode_token(token: str) -> dict:
-        if Auth.secret_password is None:
-            Auth.set_password()
-        decoded_token = Auth.decode(token, Auth.secret_password)
-        decoded_token = decoded_token.split("/")
-        return {
-            "email": decoded_token[0],
-            "password": decoded_token[1],
-            "isModerator": decoded_token[2],
-            "player_id": decoded_token[3]
-        }
+    def decode_token(token: str):
+        try:
+            if Auth.secret_password is None:
+                Auth.set_password()
+            decoded_token = Auth.decode(token, Auth.secret_password)
+            decoded_token = decoded_token.split("/")
+            return {
+                "email": decoded_token[0],
+                "password": decoded_token[1],
+                "isModerator": decoded_token[2],
+                "player_id": decoded_token[3]
+            }
+        except:
+            return None
 
     @staticmethod
     def decode(value: str, key: bytes) -> str:
