@@ -8,6 +8,7 @@ rutas_player = Blueprint("rutas_player", __name__)
 
 @rutas_player.route("/players", methods = ["POST"])
 def sign_up():
+    respuesta = HTTPStatus.INTERNAL_SERVER_ERROR
     print(request)
     player_recibido = request.json
     respuesta = Response(status=HTTPStatus.BAD_REQUEST)
@@ -16,17 +17,12 @@ def sign_up():
         if all(llave in player_recibido for llave in valores_requeridos):
             player = Player()
             player.instantiate_hashmap_to_register(player_recibido)
-            if player.sign_up():
-                print("Player registrado!")
-                print(player_recibido["email"])
-                print("El id del player es: ")
-                respuesta = Response(status=HTTPStatus.OK)
-            else:
-                respuesta = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            status_from_model = player.sign_up()
+            respuesta = Response(status=status_from_model)
     return respuesta
 
 @rutas_player.route("/login", methods= ["POST"])
-def sign_in():
+def login():
     print(request)
     player_received = request.json
     response = Response(status=HTTPStatus.BAD_REQUEST)
@@ -43,8 +39,8 @@ def sign_in():
                 session.permanent = True
                 session["token"] = token
 
-
-                player_json = player.make_to_json_login(token)
+                age = player.calculate_age()
+                player_json = player.make_to_json_login(token, age)
                 response = Response(
                     player_json,
                     status=HTTPStatus.OK,
@@ -55,8 +51,30 @@ def sign_in():
 
     return response
 
+@rutas_player.route("/logout", methods=["GET"])
+@Auth.requires_token
+def logout():
+    token = request.headers.get("token")
+    session.clear()
+    return  Response(status=HTTPStatus.OK)
+
+
 @rutas_player.route("/admin", methods=["POST"])
 @Auth.administrator_permission()
 def is_admin():
     response = Response(status=HTTPStatus.OK)
+    return response
+
+@rutas_player.route("/players", methods=["PUT"])
+@Auth.requires_authentication()
+def update():
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    player_received = request.json
+    values_required = {"email", "password", "gender", "nickname"}
+    if all(key in player_received for key in values_required):
+        player = Player()
+        player.instantiate_hashmap_to_update(player_received)
+        status_from_model = player.update()
+        response = Response(status=status_from_model)
+
     return response
