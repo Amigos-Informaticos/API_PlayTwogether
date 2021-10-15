@@ -39,8 +39,7 @@ def login():
                 session.permanent = True
                 session["token"] = token
 
-                age = player.calculate_age()
-                player_json = player.make_to_json_login(token, age)
+                player_json = player.make_to_json_login(token)
                 response = Response(
                     player_json,
                     status=HTTPStatus.OK,
