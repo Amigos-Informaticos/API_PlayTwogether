@@ -39,13 +39,13 @@ class Player:
         self.nickname = hashplayer_received["nickname"]
         self.gender = hashplayer_received["gender"]
 
-    def make_to_json_login(self, token, age):
+    def make_to_json_login(self, token):
         return json.dumps({
             "nickname": self.nickname,
             "isModerator": self.isModerator,
             "email": self.email,
             "token": token,
-            "age": age,
+            "birthday": self.birthday,
             "gender": self.gender
         })
 
@@ -120,8 +120,3 @@ class Player:
         connection.send_query(query, values)
         sent = True
         return sent
-
-    def calculate_age(self):
-        today = date.today()
-        born = self.birthday
-        return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
