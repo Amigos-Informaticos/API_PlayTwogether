@@ -45,7 +45,7 @@ class Player:
             "isModerator": self.isModerator,
             "email": self.email,
             "token": token,
-            "birthday": self.birthday.strftime('%Y/%m/%d'),
+            "birthday": self.birthday.strftime('%Y-%m-%d'),
             "gender": self.gender
         })
 
