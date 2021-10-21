@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from flask import Blueprint, request, Response, session
 
-from src.model.player import Player
+from src.model.Player import Player
 from src.services.Auth import Auth
 
 rutas_player = Blueprint("rutas_player", __name__)
@@ -12,13 +12,14 @@ def sign_up():
     print(request)
     player_recibido = request.json
     respuesta = Response(status=HTTPStatus.BAD_REQUEST)
-    valores_requeridos = {"nickname", "gender", "birthday", "email", "password"}
+    valores_requeridos = {"nickname", "gender", "birthday", "email", "password", "startTime", "endTime"}
     if player_recibido is not None:
         if all(llave in player_recibido for llave in valores_requeridos):
-            player = Player()
-            player.instantiate_hashmap_to_register(player_recibido)
-            status_from_model = player.sign_up()
-            respuesta = Response(status=status_from_model)
+            if Player.validate_player_information(player_recibido).valid:
+                player = Player()
+                player.instantiate_hashmap_to_register(player_recibido)
+                status_from_model = player.sign_up()
+                respuesta = Response(status=status_from_model)
     return respuesta
 
 @rutas_player.route("/login", methods= ["POST"])
@@ -76,4 +77,18 @@ def update():
         status_from_model = player.update()
         response = Response(status=status_from_model)
 
+    return response
+
+@rutas_player.route("/players", methods=["DELETE"])
+@Auth.requires_authentication()
+def delete():
+    status = HTTPStatus.BAD_REQUEST
+    player_received = request.json
+    values_required = {"email"}
+    if all(key in player_received for key in values_required):
+        player = Player()
+        player.email = player_received["email"]
+        status = player.delete()
+
+    response = Response(status=status)
     return response
