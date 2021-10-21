@@ -7,7 +7,7 @@ from datetime import datetime
 from functools import update_wrapper
 from typing import Any
 
-from src.model.player import Player
+from src.model.Player import Player
 
 
 class Auth:
