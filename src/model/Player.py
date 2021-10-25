@@ -21,6 +21,8 @@ class Player:
         self.password = None
         self.email = None
         self.player_id = None
+        self.start_time = None
+        self.end_time = None
 
     def instantiate_hashmap_to_register(self, hash_player_received: dict):
         self.nickname = hash_player_received["nickname"]
@@ -31,6 +33,8 @@ class Player:
         self.isVerified = False
         self.password = hash_player_received["password"]
         self.email = hash_player_received["email"]
+        self.start_time = int(hash_player_received["startTime"])
+        self.end_time = int(hash_player_received["endTime"])
 
     def instantiate_hashmap_to_login(self, hash_player_received: dict):
         self.email = hash_player_received["email"]
@@ -55,11 +59,10 @@ class Player:
     def sign_up(self) -> bool:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if not self.is_registered():
-            query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email) VALUES " \
-                    "(%s, %s, %s, %s, %s, %s,  %s, %s);"
+            query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, startTime, endTime) VALUES " \
+                    "(%s, %s, %s, %s, %s, %s,  %s, %s, %s, %s);"
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
-                      self.password,
-                      self.email]
+                      self.password, self.email, self.start_time, self.end_time]
             self.send_query(query, values)
             status = HTTPStatus.CREATED
         else:
@@ -226,18 +229,47 @@ class Player:
         return is_valid
 
     @staticmethod
+    def validate_dict_to_singup(dict)-> bool:
+        is_valid = False
+        nickname = str(dict["nickname"])
+        gender = str(dict["gender"])
+        birthday = str(dict["birthday"])
+        email = str(dict["email"])
+        password = str(dict["password"])
+        start_time = str(dict["startTime"])
+        end_time = str(dict["endTime"])
+        if Player.is_nickname(nickname) and Player.is_gender_valid(gender)\
+                and Player.is_birthday_valid(birthday) and Player.is_email(email)\
+                and Player.is_password_valid(password)\
+                and Player.is_time_to_play_valid(start_time, end_time):
+            is_valid = True
+
+        return is_valid
+
+
+
+
+
+    @staticmethod
     def validate_player_information(info: dict) -> Message:
         message = Message()
-        nickname_valid = Player.is_nickname(dict["nickname"])
+        nickname = str(dict["nickname"])
+        nickname_valid = Player.is_nickname(nickname)
         if nickname_valid.valid:
-            gender_valid = Player.is_gender_valid(dict["gender"])
+            gender = str(dict["gender"])
+            gender_valid = Player.is_gender_valid(gender)
             if gender_valid.valid:
-                birthday_valid = Player.is_birthday_valid(dict["birthday"])
+                birthday = str(dict["birthday"])
+                birthday_valid = Player.is_birthday_valid(birthday)
                 if birthday_valid.valid:
-                    email_valid = Player.is_email(dict["email"])
+                    email = str(dict["email"])
+                    email_valid = Player.is_email(email)
                     if email_valid.valid:
-                        if Player.is_password_valid(dict["password"]):
-                            time_valid = Player.is_time_to_play_valid(dict["startTime"], dict["endTime"])
+                        password = str (dict["password"])
+                        if Player.is_password_valid(password):
+                            start_time = str(dict["startTime"])
+                            end_time = str(dict["endTime"])
+                            time_valid = Player.is_time_to_play_valid(start_time, end_time)
                             if time_valid.valid:
                                 message.valid = True
                             else:

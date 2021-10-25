@@ -15,7 +15,7 @@ def sign_up():
     valores_requeridos = {"nickname", "gender", "birthday", "email", "password", "startTime", "endTime"}
     if player_recibido is not None:
         if all(llave in player_recibido for llave in valores_requeridos):
-            if Player.validate_player_information(player_recibido).valid:
+            if Player.validate_dict_to_singup(player_recibido):
                 player = Player()
                 player.instantiate_hashmap_to_register(player_recibido)
                 status_from_model = player.sign_up()
