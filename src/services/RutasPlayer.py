@@ -1,12 +1,14 @@
 from http import HTTPStatus
 from flask import Blueprint, request, Response, session
 
+from src.model.Game import Game
 from src.model.Player import Player
 from src.services.Auth import Auth
 
 rutas_player = Blueprint("rutas_player", __name__)
 
-@rutas_player.route("/players", methods = ["POST"])
+
+@rutas_player.route("/players", methods=["POST"])
 def sign_up():
     respuesta = HTTPStatus.INTERNAL_SERVER_ERROR
     print(request)
@@ -22,7 +24,8 @@ def sign_up():
                 respuesta = Response(status=status_from_model)
     return respuesta
 
-@rutas_player.route("/login", methods= ["POST"])
+
+@rutas_player.route("/login", methods=["POST"])
 def login():
     print(request)
     player_received = request.json
@@ -51,12 +54,13 @@ def login():
 
     return response
 
+
 @rutas_player.route("/logout", methods=["GET"])
 @Auth.requires_token
 def logout():
     token = request.headers.get("token")
     session.clear()
-    return  Response(status=HTTPStatus.OK)
+    return Response(status=HTTPStatus.OK)
 
 
 @rutas_player.route("/admin", methods=["POST"])
@@ -64,6 +68,7 @@ def logout():
 def is_admin():
     response = Response(status=HTTPStatus.OK)
     return response
+
 
 @rutas_player.route("/players", methods=["PUT"])
 @Auth.requires_authentication()
@@ -79,6 +84,7 @@ def update():
 
     return response
 
+
 @rutas_player.route("/players", methods=["DELETE"])
 @Auth.requires_authentication()
 def delete():
@@ -90,5 +96,13 @@ def delete():
         player.email = player_received["email"]
         status = player.delete()
 
+    response = Response(status=status)
+    return response
+
+
+@rutas_player.route("/player/game", methods=["POST"])
+def add_game():
+    game_recived = request.json
+    status = Game.add_game(game_recived)
     response = Response(status=status)
     return response

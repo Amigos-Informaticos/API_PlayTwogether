@@ -102,6 +102,15 @@ class Player:
             is_registered = True
         return is_registered
 
+    def is_registered_and_active(self) -> bool:
+        is_registered = False
+        query = "SELECT * FROM player WHERE email = %s and status = 1;"
+        values = [self.email]
+        result = self.select(query, values)
+        if len(result) > 0:
+            is_registered = True
+        return is_registered
+
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
@@ -245,50 +254,6 @@ class Player:
             is_valid = True
 
         return is_valid
-
-
-
-
-
-    @staticmethod
-    def validate_player_information(info: dict) -> Message:
-        message = Message()
-        nickname = str(dict["nickname"])
-        nickname_valid = Player.is_nickname(nickname)
-        if nickname_valid.valid:
-            gender = str(dict["gender"])
-            gender_valid = Player.is_gender_valid(gender)
-            if gender_valid.valid:
-                birthday = str(dict["birthday"])
-                birthday_valid = Player.is_birthday_valid(birthday)
-                if birthday_valid.valid:
-                    email = str(dict["email"])
-                    email_valid = Player.is_email(email)
-                    if email_valid.valid:
-                        password = str (dict["password"])
-                        if Player.is_password_valid(password):
-                            start_time = str(dict["startTime"])
-                            end_time = str(dict["endTime"])
-                            time_valid = Player.is_time_to_play_valid(start_time, end_time)
-                            if time_valid.valid:
-                                message.valid = True
-                            else:
-                                message.valid = False
-                                message.message = time_valid.message
-                    else:
-                        message.valid = False
-                        message.message = "Invalid Password"
-                else:
-                    message.valid = False
-                    message.message = birthday_valid.message
-            else:
-                message.valid = False
-                message.message = gender_valid.message
-        else:
-            message.valid = False
-            message.message = nickname_valid.message
-
-        return message
 
     def delete(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
