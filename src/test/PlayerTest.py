@@ -10,6 +10,16 @@ institutional_email = "ZS18012187@estudiantes.uv.mx"
 email_valid = "rendon.luisgerardo@gmail.com"
 email_empty = ""
 
+dict_player_valid = {
+    "nickname": "Jorge",
+    "gender": "F",
+    "birthday": "1998-11-24",
+    "email": "jorge@gmail.com",
+    "password": "12345678",
+    "startTime": 9,
+    "endTime": 14
+}
+
 
 def test_get_id():
     assert player.get_id() == 1
@@ -55,10 +65,6 @@ def test_is_nickname_with_space():
     assert not Player.is_nickname("hola 98").valid
 
 
-def test_is_nickname_greater():
-    assert not Player.is_nickname("1234567891234567").valid
-
-
 def test_is_nickname_smaller():
     assert not Player.is_nickname("123").valid
 
@@ -69,3 +75,11 @@ def test_is_nickname_valid_smaller():
 
 def test_is_nickname_valid_greater():
     assert Player.is_nickname("123456789123456").valid
+
+
+def test_is_gender_valid():
+    assert Player.is_gender_valid("F")
+
+
+def test_dict_player_valid():
+    assert Player.validate_dict_to_singup(dict_player_valid)
