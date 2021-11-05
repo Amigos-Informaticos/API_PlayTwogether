@@ -1,3 +1,5 @@
+from aifc import Error
+
 from src.model.Player import Player
 import pytest
 
@@ -83,3 +85,12 @@ def test_is_gender_valid():
 
 def test_dict_player_valid():
     assert Player.validate_dict_to_singup(dict_player_valid)
+
+
+def test_is_register_exception():
+    expect_occurred = False
+    try:
+        player.is_registered()
+    except Error:
+        expect_occurred = True
+    assert expect_occurred
