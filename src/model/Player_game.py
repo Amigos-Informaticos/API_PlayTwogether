@@ -20,6 +20,7 @@ class Player_game:
         self.id_player = None
         self.id_rank = None
         self.rol = None
+        self.nickname = None
 
     def get_player_game_info(self):
         query = "SELECT * FROM player_game WHERE id_player = %s and game = %s;"
@@ -52,15 +53,16 @@ class Player_game:
                 "note": result[0]["note"],
                 "personage": personage.name,
                 "rank": rank.name,
-                "rol": rol.name
+                "rol": rol.name,
+                "nickname": result[0]["nickname"]
             })
         return player_game_info
 
     def add_player(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        query = "CALL PA_register_player_game(%s, %s, %s, %s, %s, %s, %s, %s)"
+        query = "CALL PA_register_player_game(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
         values = [self.accountLevel, self.game, self.hoursPlayed, self.note, self.persongage, self.id_player,
-                  self.id_rank, self.rol]
+                  self.id_rank, self.rol, self.nickname]
         if ConnectionDataBase.send_query(query, values):
             status = HTTPStatus.CREATED
         return status

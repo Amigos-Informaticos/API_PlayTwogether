@@ -40,5 +40,9 @@ def get_game_played_by_player():
 
     return response
 
+#@game_routes.route("/player/game", methods=["POST"])
+#def get_game_played_by_player():
+
+
 
 
