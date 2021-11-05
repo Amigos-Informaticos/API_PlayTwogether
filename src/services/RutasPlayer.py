@@ -3,6 +3,7 @@ from flask import Blueprint, request, Response, session
 
 from src.model.Game import Game
 from src.model.Player import Player
+from src.model.Player_game import Player_game
 from src.services.Auth import Auth
 
 rutas_player = Blueprint("rutas_player", __name__)
@@ -100,9 +101,3 @@ def delete():
     return response
 
 
-@rutas_player.route("/player/game", methods=["POST"])
-def add_game():
-    game_recived = request.json
-    status = Game.add_game(game_recived)
-    response = Response(status=status)
-    return response
