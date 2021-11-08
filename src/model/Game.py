@@ -4,7 +4,7 @@ from src.data_access.ConnectionDataBase import ConnectionDataBase
 class Game:
     def __init__(self):
         self.id = -1
-        self.name = None
+        self.name = ""
 
     def get_name(self):
         result = None
@@ -21,3 +21,4 @@ class Game:
         result =ConnectionDataBase.select(query, values)
         if result:
             self.id = result[0]["id_game"]
+

@@ -100,4 +100,10 @@ def delete():
     response = Response(status=status)
     return response
 
+@rutas_player.route("/players/verify", methods=["PATCH"])
+def verify():
+    status = HTTPStatus.BAD_REQUEST
+
+
+
 
