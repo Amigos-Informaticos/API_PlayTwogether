@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from email_validator import validate_email, EmailNotValidError
 
+from src.data_access.ConnectionDataBase import ConnectionDataBase
 from src.data_access.EasyConnection import EasyConnection
 from src.model import Status
 from src.model.Message import Message
@@ -63,7 +64,7 @@ class Player:
                     "(%s, %s, %s, %s, %s, %s,  %s, %s, %s, %s);"
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
                       self.password, self.email, self.start_time, self.end_time]
-            self.send_query(query, values)
+            ConnectionDataBase.send_query(query, values)
             status = HTTPStatus.CREATED
         else:
             status = HTTPStatus.CONFLICT
@@ -73,16 +74,26 @@ class Player:
         id_recovered = -1
         query = "SELECT player_id FROM player WHERE email = %s;"
         values = [self.email]
-        resultado = self.select(query, values)
+        resultado = ConnectionDataBase.select(query, values)
         id_recuperado = resultado[0]["player_id"]
         self.player_id = id_recuperado
         return id_recuperado
+
+    def get_id_by_nickname(self) -> int:
+        id_recovered = -1
+        query = "SELECT player_id FROM player WHERE nickname = %s;"
+        values = [self.nickname]
+        resultado = ConnectionDataBase.select(query, values)
+        if len(resultado) > 0:
+            id_recovered  = resultado[0]["player_id"]
+            self.player_id = id_recovered
+        return id_recovered
 
     def login(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
         values = [self.email, self.password]
-        result = self.select(query, values)
+        result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             self.nickname = result[0]["nickname"]
             self.isModerator = result[0]["isModerator"]
@@ -97,7 +108,7 @@ class Player:
         is_registered = False
         query = "SELECT * FROM player WHERE email = %s;"
         values = [self.email]
-        result = self.select(query, values)
+        result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             is_registered = True
         return is_registered
@@ -106,7 +117,7 @@ class Player:
         is_registered = False
         query = "SELECT * FROM player WHERE email = %s and status = 1;"
         values = [self.email]
-        result = self.select(query, values)
+        result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             is_registered = True
         return is_registered
@@ -116,25 +127,11 @@ class Player:
         if self.is_registered():
             query = "UPDATE player SET nickname = %s, gender = %s, password = %s WHERE email = %s;"
             values = [self.nickname, self.gender, self.password, self.email]
-            if self.send_query(query, values):
+            if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
             status = HTTPStatus.NOT_FOUND
         return status
-
-    @staticmethod
-    def select(query, values):
-        connection = EasyConnection()
-        result = connection.select(query, values)
-        return result
-
-    @staticmethod
-    def send_query(query, values):
-        sent = False
-        connection = EasyConnection()
-        connection.send_query(query, values)
-        sent = True
-        return sent
 
     @staticmethod
     def is_email(email) -> Message:
@@ -238,7 +235,7 @@ class Player:
         return is_valid
 
     @staticmethod
-    def validate_dict_to_singup(dict)-> bool:
+    def validate_dict_to_singup(dict) -> bool:
         is_valid = False
         nickname = str(dict["nickname"])
         gender = str(dict["gender"])
@@ -247,9 +244,9 @@ class Player:
         password = str(dict["password"])
         start_time = str(dict["startTime"])
         end_time = str(dict["endTime"])
-        if Player.is_nickname(nickname) and Player.is_gender_valid(gender)\
-                and Player.is_birthday_valid(birthday) and Player.is_email(email)\
-                and Player.is_password_valid(password)\
+        if Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
+                and Player.is_birthday_valid(birthday) and Player.is_email(email) \
+                and Player.is_password_valid(password) \
                 and Player.is_time_to_play_valid(start_time, end_time):
             is_valid = True
 
@@ -260,9 +257,20 @@ class Player:
         if self.is_registered():
             query = "UPDATE player SET status = 2 WHERE email = %s AND status = 1;"
             values = [self.email]
-            Player.send_query(query, values)
-            status = HTTPStatus.OK
+            if ConnectionDataBase.send_query(query, values):
+                status = HTTPStatus.OK
         else:
             status = HTTPStatus.NOT_FOUND
 
+        return status
+
+    def verify(self) -> int:
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        if self.is_registered_and_active():
+            query = "UPDATE player SET isVerufied = 1 WHERE email = %s"
+            values = [self.email]
+            if ConnectionDataBase.send_query(query, values):
+                status = HTTPStatus.OK
+        else:
+            status = HTTPStatus.NOT_FOUND
         return status
