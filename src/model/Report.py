@@ -9,18 +9,21 @@ class Report:
         self.informer = None
         self.informed = None
         self.reason = None
+        self.comment = None
 
     def instanciate(self, info: dict) -> bool:
         instanciated = False
         player_informer = Player()
         player_informed = Player()
-        player_informer.email = info["informer"]
-        player_informed.email = info["informed"]
+        player_informer.nickname = info["informer"]
+        player_informed.nickname = info["informed"]
         reason = info["reason"]
-        if player_informed.get_id() != -1 and player_informer.get_id() != -1 and Report.exist_reason(reason):
+        if player_informed.get_id_by_nickname() != -1 and player_informer.get_id_by_nickname() != -1 and Report.exist_reason(
+                reason):
             self.informer = player_informer.player_id
-            self.informer = player_informed.player_id
-            self.reason = dict["reason"]
+            self.informed = player_informed.player_id
+            self.reason = int(info["reason"])
+            self.comment = str(info["comment"])
             instanciated = True
         return instanciated
 
@@ -42,13 +45,14 @@ class Report:
         informer = str(info["informer"])
         informed = str(info["informed"])
         reason = str(info["reason"])
-        return reason.isdigit() and informer != informed
+        comment = str(info["comment"])
+        return reason.isdigit() and informer != informed and 0 < len(comment) <= 50
 
     def add(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if not self.report_exist():
-            query = "INSERT into report (informed, informer, reason) VALUES (%s, %s, %s);"
-            values = [self.informed, self.informer, self.reason]
+            query = "INSERT into report (informed, informer, reason, comment) VALUES (%s, %s, %s, %s);"
+            values = [self.informed, self.informer, self.reason, self.comment]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.CREATED
         else:

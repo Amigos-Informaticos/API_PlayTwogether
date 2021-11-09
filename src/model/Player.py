@@ -85,7 +85,7 @@ class Player:
         values = [self.nickname]
         resultado = ConnectionDataBase.select(query, values)
         if len(resultado) > 0:
-            id_recovered  = resultado[0]["player_id"]
+            id_recovered = resultado[0]["player_id"]
             self.player_id = id_recovered
         return id_recovered
 
@@ -274,3 +274,17 @@ class Player:
         else:
             status = HTTPStatus.NOT_FOUND
         return status
+
+    def get_player_info(self):
+        query = "SELECT gender, birthday FROM player WHERE nickname = %s;"
+        player_json = None
+        values = [self.nickname]
+        result = ConnectionDataBase.select(query, values)
+        if len(result) > 0:
+            self.birthday = result[0]["birthday"]
+            self.gender = result[0]["gender"]
+            player_json = json.dumps({
+                "birthday": self.birthday.strftime('%Y-%m-%d'),
+                "gender": self.gender
+            })
+        return player_json

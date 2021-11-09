@@ -11,7 +11,7 @@ report_routes = Blueprint("report_routes", __name__)
 def add():
     status_response = HTTPStatus.BAD_REQUEST
     report_json = request.json
-    values_required = {"informed", "informer", "reason"}
+    values_required = {"informed", "informer", "reason", "comment"}
     report = Report()
     if report_json is not None and all(key in report_json for key in values_required) and \
             Report.validate_info(report_json) and report.instanciate(report_json):
