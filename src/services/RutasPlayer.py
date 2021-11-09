@@ -104,6 +104,17 @@ def delete():
 def verify():
     status = HTTPStatus.BAD_REQUEST
 
+@rutas_player.route("/players/<nickname>", methods=["GET"])
+def get_player(nickname):
+    response = Response(status=HTTPStatus.NOT_FOUND)
+    player = Player()
+    player.nickname = nickname
+    player_json = player.get_player_info()
+    if player_json is not  None:
+        response = Response(player_json,
+                    status=HTTPStatus.OK,
+                    mimetype="application/json")
+    return response
 
 
 
