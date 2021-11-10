@@ -287,7 +287,7 @@ class Player:
     def ban(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered_and_active_nickname():
-            query = "UPDATE player SET status = 2 WHERE nickname = %s AND status = 3;"
+            query = "UPDATE player SET status = 3 WHERE nickname = %s AND status = 1;"
             values = [self.nickname]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
@@ -296,16 +296,18 @@ class Player:
         return status
 
     def get_player_info(self):
-        query = "SELECT gender, birthday FROM player WHERE nickname = %s;"
+        query = "SELECT gender, birthday, isVerified FROM player WHERE nickname = %s;"
         player_json = None
         values = [self.nickname]
         result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             self.birthday = result[0]["birthday"]
             self.gender = result[0]["gender"]
+            self.isVerified = result[0]["isVerified"]
             player_json = json.dumps({
                 "birthday": self.birthday.strftime('%Y-%m-%d'),
-                "gender": self.gender
+                "gender": self.gender,
+                "isVerified": self.isVerified
             })
         return player_json
 
