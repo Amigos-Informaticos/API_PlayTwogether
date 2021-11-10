@@ -1,5 +1,9 @@
+import io
+from ftplib import FTP
 from http import HTTPStatus
-from flask import Blueprint, request, Response, session
+from tempfile import NamedTemporaryFile
+
+from flask import Blueprint, request, Response, session, send_file
 
 from src.model.Game import Game
 from src.model.Player import Player
@@ -100,9 +104,15 @@ def delete():
     response = Response(status=status)
     return response
 
-@rutas_player.route("/players/verify", methods=["PATCH"])
-def verify():
-    status = HTTPStatus.BAD_REQUEST
+
+@rutas_player.route("/players/<nickname>/verify", methods=["PATCH"])
+@Auth.administrator_permission()
+def verify(nickname):
+    player = Player()
+    player.nickname = nickname
+    status_response = player.verify()
+    return Response(status=status_response)
+
 
 @rutas_player.route("/players/<nickname>", methods=["GET"])
 def get_player(nickname):
@@ -110,11 +120,65 @@ def get_player(nickname):
     player = Player()
     player.nickname = nickname
     player_json = player.get_player_info()
-    if player_json is not  None:
+    if player_json is not None:
         response = Response(player_json,
-                    status=HTTPStatus.OK,
-                    mimetype="application/json")
+                            status=HTTPStatus.OK,
+                            mimetype="application/json")
     return response
 
 
+@rutas_player.route("/players/<nickname>/ban", methods=["PATCH"])
+def ban_player(nickname):
+    player = Player()
+    player.nickname = nickname
+    status_response = player.ban()
+    return Response(status=status_response)
 
+
+@rutas_player.route("/players/<nickname>/image", methods=["POST"])
+def add_image(nickname):
+    image = request.files["image"]
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    saved = False
+    ftp_connection = FTP("amigosinformaticos.ddns.net")
+    ftp_connection.login("pi", "beethoven", "noaccount")
+    ftp_connection.cwd("playt")
+    command = f"STOR {nickname}.png"
+    try:
+        code = ftp_connection.storbinary(command, image.stream)
+        code = code.split(" ")[0]
+        if code == "226":
+            response = Response(status=HTTPStatus.CREATED)
+    except:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    finally:
+        ftp_connection.close()
+    return response
+
+
+@rutas_player.route("/players/<nickname>/image", methods=["GET"])
+def get_image(nickname):
+    response = Response(status=HTTPStatus.NOT_FOUND)
+    #ftp_connection = FTP("amigosinformaticos.ddns.net")
+    #ftp_connection.login("pi", "beethoven", "noaccount")
+    #ftp_connection.cwd("playt")
+
+    #image = NamedTemporaryFile(mode="wrb+")
+
+    #try:
+      #  with open(image.name, "wb+") as open_file:
+       #     command = f"RETR {nickname}.png"
+        #    ftp_connection.retrbinary(command, open_file.write)
+
+
+    #except:
+
+     #   response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    #finally:
+     #   ftp_connection.close()
+
+    #with open(image.name, "rb") as open_file:
+     #   response = send_file(io.BytesIO(open_file.read()), mimetype="image/png", as_attachment=False)
+
+
+    return response
