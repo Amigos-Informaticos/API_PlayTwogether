@@ -22,6 +22,14 @@ class Player_game:
         self.rol = None
         self.nickname = None
 
+    def make_json_games_played_by_player(self) -> dict:
+        info = {
+            "accountLevel": self.accountLevel,
+            "rank": self.id_rank,
+            "name": self.game
+        }
+        return info
+
     def get_player_game_info(self):
         query = "SELECT * FROM player_game WHERE id_player = %s and game = %s;"
         values = [self.id_player, self.game]
@@ -68,26 +76,27 @@ class Player_game:
         return status
 
     @staticmethod
-    def get_games_played_by_player(email: str):
+    def get_games_played_by_player(nickname: str):
         games_id = None
         result = None
         player = Player()
-        player.email = email
-        id_player = player.get_id()
+        player.nickname = nickname
+        id_player = player.get_id_by_nickname()
         games_played = []
         if id_player is not -1:
-            query = "SELECT game FROM player_game WHERE id_player = %s;"
+            query = "SELECT accountLevel, enumRank.rankName, game.name FROM player_game INNER JOIN enumRank ON" \
+                    " player_game.id_rank = enumRank.id INNER JOIN game ON player_game.game = game.id_game WHERE" \
+                    " id_player = %s;"
             values = [id_player]
             result = ConnectionDataBase.select(query, values)
             if result:
                 for individual_game in result:
-                    game_aux = Game()
-                    game_aux.id = individual_game["id_game"]
-                    game_aux.get_name()
-                    games_played.append(game_aux)
+                    game_aux = Player_game()
+                    game_aux.game = individual_game["name"]
+                    game_aux.id_rank = individual_game["rankName"]
+                    game_aux.accountLevel = individual_game["accountLevel"]
+                    games_played.append(game_aux.make_json_games_played_by_player())
         return games_played
-
-
 
     @staticmethod
     def add_game(game_information: dict) -> int:
@@ -100,3 +109,16 @@ class Player_game:
             else:
                 status = HTTPStatus.NOT_IMPLEMENTED
         return status
+
+    @staticmethod
+    def register_lol_chmapions():
+        f = open(r'C:\Users\Gerardo Soft\PycharmProjects\PlayTwogether\src\model\champions.json', encoding="utf8")
+        data = json.load(f)
+
+        query = "INSERT INTO enumPersonage(name) VALUES (%s);"
+
+        for invividual in data:
+            values = [invividual["name"]]
+            ConnectionDataBase.send_query(query, values)
+            print(invividual["name"])
+        f.close()
