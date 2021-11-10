@@ -122,6 +122,15 @@ class Player:
             is_registered = True
         return is_registered
 
+    def is_registered_and_active_nickname(self) -> bool:
+        is_registered = False
+        query = "SELECT * FROM player WHERE nickname = %s and status = 1;"
+        values = [self.nickname]
+        result = ConnectionDataBase.select(query, values)
+        if len(result) > 0:
+            is_registered = True
+        return is_registered
+
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
@@ -266,9 +275,20 @@ class Player:
 
     def verify(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        if self.is_registered_and_active():
-            query = "UPDATE player SET isVerufied = 1 WHERE email = %s"
-            values = [self.email]
+        if self.is_registered_and_active_nickname():
+            query = "UPDATE player SET isVerified = 1 WHERE nickname = %s"
+            values = [self.nickname]
+            if ConnectionDataBase.send_query(query, values):
+                status = HTTPStatus.OK
+        else:
+            status = HTTPStatus.NOT_FOUND
+        return status
+
+    def ban(self) -> int:
+        status = HTTPStatus.INTERNAL_SERVER_ERROR
+        if self.is_registered_and_active_nickname():
+            query = "UPDATE player SET status = 2 WHERE nickname = %s AND status = 3;"
+            values = [self.nickname]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -288,3 +308,7 @@ class Player:
                 "gender": self.gender
             })
         return player_json
+
+    @staticmethod
+    def get_games(self):
+        query = "SELECT game, accountLevel, id_Rank"
