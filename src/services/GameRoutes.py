@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 
 from flask import Blueprint, request, Response
@@ -63,4 +64,16 @@ def add_game_played_by_player():
                 player_game.nickname = player_game_json["nickname"]
                 status_server = player_game.add_player()
             response = Response(status=status_server)
+    return response
+
+
+@game_routes.route("/players/<nickname>/games", methods=["GET"])
+def get_games_played_by_player(nickname):
+    response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    games = Player_game.get_games_played_by_player(nickname)
+    if len(games) > 0:
+        games_json = json.dumps(games)
+        response = Response(games_json, status=HTTPStatus.OK, mimetype="application/json")
+    else:
+        response = Response(status=HTTPStatus.NOT_FOUND)
     return response
