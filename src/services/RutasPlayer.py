@@ -19,7 +19,7 @@ def sign_up():
     print(request)
     player_recibido = request.json
     respuesta = Response(status=HTTPStatus.BAD_REQUEST)
-    valores_requeridos = {"nickname", "gender", "birthday", "email", "password", "startTime", "endTime"}
+    valores_requeridos = {"nickname", "gender", "birthday", "email", "password", "schedule"}
     if player_recibido is not None:
         if all(llave in player_recibido for llave in valores_requeridos):
             if Player.validate_dict_to_singup(player_recibido):
@@ -159,26 +159,29 @@ def add_image(nickname):
 @rutas_player.route("/players/<nickname>/image", methods=["GET"])
 def get_image(nickname):
     response = Response(status=HTTPStatus.NOT_FOUND)
-    #ftp_connection = FTP("amigosinformaticos.ddns.net")
-    #ftp_connection.login("pi", "beethoven", "noaccount")
-    #ftp_connection.cwd("playt")
+    # ftp_connection = FTP("amigosinformaticos.ddns.net")
+    # ftp_connection.login("pi", "beethoven", "noaccount")
+    # ftp_connection.cwd("playt")
 
-    #image = NamedTemporaryFile(mode="wrb+")
+    # image = NamedTemporaryFile(mode="wrb+")
 
-    #try:
-      #  with open(image.name, "wb+") as open_file:
-       #     command = f"RETR {nickname}.png"
-        #    ftp_connection.retrbinary(command, open_file.write)
+    # try:
+    #  with open(image.name, "wb+") as open_file:
+    #     command = f"RETR {nickname}.png"
+    #    ftp_connection.retrbinary(command, open_file.write)
 
+    # except:
 
-    #except:
+    #   response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    # finally:
+    #   ftp_connection.close()
 
-     #   response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-    #finally:
-     #   ftp_connection.close()
-
-    #with open(image.name, "rb") as open_file:
-     #   response = send_file(io.BytesIO(open_file.read()), mimetype="image/png", as_attachment=False)
-
+    # with open(image.name, "rb") as open_file:
+    #   response = send_file(io.BytesIO(open_file.read()), mimetype="image/png", as_attachment=False)
 
     return response
+
+@rutas_player.route("/play", methods=["GET"])
+def play():
+    Player.validate_time()
+    return Response(status=HTTPStatus.OK)
