@@ -1,5 +1,4 @@
 import mysql.connector
-from mysql.connector import Error
 
 
 class EasyConnection:
@@ -27,37 +26,29 @@ class EasyConnection:
         executed = False
         if self.host is not None:
             parameters: tuple = ()
-            try:
-                if values is not None:
-                    cursor = self.connect(True)
-                    parameters = tuple(values)
-                else:
-                    cursor = self.connect()
-                cursor.execute(query, parameters)
-                self.connection.commit()
-                executed = True
-            except Error as error:
-                print(f"Problem connecting to the database: {error}")
-            finally:
-                self.close_connection()
+
+            if values is not None:
+                cursor = self.connect(True)
+                parameters = tuple(values)
+            else:
+                cursor = self.connect()
+            cursor.execute(query, parameters)
+            self.connection.commit()
+            executed = True
+
         return executed
 
     def select(self, query, values: list = None):
         results = []
         if self.host is not None:
             parameters: tuple = ()
-            try:
-                if values is not None:
-                    cursor = self.connect(True)
-                    parameters = tuple(values)
-                else:
-                    cursor = self.connect(False)
-                cursor.execute(query, parameters)
-                tmp_results = cursor.fetchall()
-                for row in tmp_results:
-                    results.append(dict(zip(cursor.column_names, row)))
-            except Error as error:
-                print(f"Problem connecting to the database: {error}")
-            finally:
-                self.close_connection()
+            if values is not None:
+                cursor = self.connect(True)
+                parameters = tuple(values)
+            else:
+                cursor = self.connect(False)
+            cursor.execute(query, parameters)
+            tmp_results = cursor.fetchall()
+            for row in tmp_results:
+                results.append(dict(zip(cursor.column_names, row)))
         return results
