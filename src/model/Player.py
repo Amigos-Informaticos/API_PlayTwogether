@@ -3,10 +3,7 @@ from datetime import datetime, date
 from http import HTTPStatus
 
 from email_validator import validate_email, EmailNotValidError
-
 from src.data_access.ConnectionDataBase import ConnectionDataBase
-from src.data_access.EasyConnection import EasyConnection
-from src.model import Status
 from src.model.Message import Message
 
 
@@ -22,8 +19,7 @@ class Player:
         self.password = None
         self.email = None
         self.player_id = None
-        self.start_time = None
-        self.end_time = None
+        self.schedule = None
 
     def instantiate_hashmap_to_register(self, hash_player_received: dict):
         self.nickname = hash_player_received["nickname"]
@@ -34,8 +30,7 @@ class Player:
         self.isVerified = False
         self.password = hash_player_received["password"]
         self.email = hash_player_received["email"]
-        self.start_time = int(hash_player_received["startTime"])
-        self.end_time = int(hash_player_received["endTime"])
+        self.schedule = hash_player_received["schedule"]
 
     def instantiate_hashmap_to_login(self, hash_player_received: dict):
         self.email = hash_player_received["email"]
@@ -46,6 +41,7 @@ class Player:
         self.password = hashplayer_received["password"]
         self.nickname = hashplayer_received["nickname"]
         self.gender = hashplayer_received["gender"]
+        self.schedule = hashplayer_received["schedule"]
 
     def make_to_json_login(self, token):
         return json.dumps({
@@ -60,10 +56,10 @@ class Player:
     def sign_up(self) -> bool:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if not self.is_registered():
-            query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, startTime, endTime) VALUES " \
+            query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, schedule) VALUES " \
                     "(%s, %s, %s, %s, %s, %s,  %s, %s, %s, %s);"
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
-                      self.password, self.email, self.start_time, self.end_time]
+                      self.password, self.email, self.schedule]
             ConnectionDataBase.send_query(query, values)
             status = HTTPStatus.CREATED
         else:
@@ -134,8 +130,8 @@ class Player:
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
-            query = "UPDATE player SET nickname = %s, gender = %s, password = %s WHERE email = %s;"
-            values = [self.nickname, self.gender, self.password, self.email]
+            query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s WHERE email = %s;"
+            values = [self.nickname, self.gender, self.password,self.schedule, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -251,15 +247,21 @@ class Player:
         birthday = str(dict["birthday"])
         email = str(dict["email"])
         password = str(dict["password"])
-        start_time = str(dict["startTime"])
-        end_time = str(dict["endTime"])
+        schedule = str(dict["schedule"])
         if Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
                 and Player.is_birthday_valid(birthday) and Player.is_email(email) \
                 and Player.is_password_valid(password) \
-                and Player.is_time_to_play_valid(start_time, end_time):
+                and Player.schedule_exist(schedule):
             is_valid = True
 
         return is_valid
+
+    @staticmethod
+    def schedule_exist(schedule: str) -> bool:
+        query = "SELECT * FROM schedule WHERE name_schedule = %s;"
+        values = [schedule]
+        result = ConnectionDataBase.select(query, values)
+        return len(result) > 0
 
     def delete(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
@@ -310,7 +312,3 @@ class Player:
                 "isVerified": self.isVerified
             })
         return player_json
-
-    @staticmethod
-    def get_games(self):
-        query = "SELECT game, accountLevel, id_Rank"
