@@ -1,6 +1,7 @@
 import io
 from ftplib import FTP
 from http import HTTPStatus
+from sqlite3 import DatabaseError, InterfaceError
 from tempfile import NamedTemporaryFile
 
 from flask import Blueprint, request, Response, session, send_file
@@ -15,19 +16,22 @@ rutas_player = Blueprint("rutas_player", __name__)
 
 @rutas_player.route("/players", methods=["POST"])
 def sign_up():
-    respuesta = HTTPStatus.INTERNAL_SERVER_ERROR
     print(request)
     player_recibido = request.json
-    respuesta = Response(status=HTTPStatus.BAD_REQUEST)
+    response = Response(status=HTTPStatus.BAD_REQUEST)
     valores_requeridos = {"nickname", "gender", "birthday", "email", "password", "schedule"}
     if player_recibido is not None:
         if all(llave in player_recibido for llave in valores_requeridos):
             if Player.validate_dict_to_singup(player_recibido):
                 player = Player()
-                player.instantiate_hashmap_to_register(player_recibido)
-                status_from_model = player.sign_up()
-                respuesta = Response(status=status_from_model)
-    return respuesta
+                try:
+                    player.instantiate_hashmap_to_register(player_recibido)
+                    status_from_model = player.sign_up()
+                    response = Response(status=status_from_model)
+                except (DatabaseError, InterfaceError) as e:
+                    response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+                    print(e)
+    return response
 
 
 @rutas_player.route("/login", methods=["POST"])
@@ -38,24 +42,28 @@ def login():
     values_required = {"email", "password"}
     if player_received is not None:
         if all(key in player_received for key in values_required):
-            player = Player()
-            player.instantiate_hashmap_to_login(player_received)
-            result = player.login()
+            try:
+                player = Player()
+                player.instantiate_hashmap_to_login(player_received)
+                result = player.login()
 
-            if result == HTTPStatus.OK:
-                player.get_id()
-                token = Auth.generate_token(player)
-                session.permanent = True
-                session["token"] = token
+                if result == HTTPStatus.OK:
+                    player.get_id()
+                    token = Auth.generate_token(player)
+                    session.permanent = True
+                    session["token"] = token
 
-                player_json = player.make_to_json_login(token)
-                response = Response(
-                    player_json,
-                    status=HTTPStatus.OK,
-                    mimetype="application/json"
-                )
-            else:
-                response = Response(status=result)
+                    player_json = player.make_to_json_login(token)
+                    response = Response(
+                        player_json,
+                        status=HTTPStatus.OK,
+                        mimetype="application/json"
+                    )
+                else:
+                    response = Response(status=result)
+            except (DatabaseError, InterfaceError) as e:
+                response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+                print(e)
 
     return response
 
@@ -80,12 +88,16 @@ def is_admin():
 def update():
     response = Response(status=HTTPStatus.BAD_REQUEST)
     player_received = request.json
-    values_required = {"email", "password", "gender", "nickname"}
+    values_required = {"email", "password", "gender", "nickname", "schedule"}
     if all(key in player_received for key in values_required):
         player = Player()
-        player.instantiate_hashmap_to_update(player_received)
-        status_from_model = player.update()
-        response = Response(status=status_from_model)
+        try:
+            player.instantiate_hashmap_to_update(player_received)
+            status_from_model = player.update()
+            response = Response(status=status_from_model)
+        except (DatabaseError, InterfaceError) as e:
+            response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            print(e)
 
     return response
 
@@ -98,10 +110,13 @@ def delete():
     values_required = {"email"}
     if all(key in player_received for key in values_required):
         player = Player()
-        player.email = player_received["email"]
-        status = player.delete()
-
-    response = Response(status=status)
+        try:
+            player.email = player_received["email"]
+            status = player.delete()
+            response = Response(status=status)
+        except (DatabaseError, InterfaceError) as e:
+            response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            print(e)
     return response
 
 
@@ -110,8 +125,13 @@ def delete():
 def verify(nickname):
     player = Player()
     player.nickname = nickname
-    status_response = player.verify()
-    return Response(status=status_response)
+    try:
+        status_response = player.verify()
+        response = Response(status= status_response)
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        print(e)
+    return response
 
 
 @rutas_player.route("/players/<nickname>", methods=["GET"])
@@ -119,11 +139,15 @@ def get_player(nickname):
     response = Response(status=HTTPStatus.NOT_FOUND)
     player = Player()
     player.nickname = nickname
-    player_json = player.get_player_info()
-    if player_json is not None:
-        response = Response(player_json,
-                            status=HTTPStatus.OK,
-                            mimetype="application/json")
+    try:
+        player_json = player.get_player_info()
+        if player_json is not None:
+            response = Response(player_json,
+                                status=HTTPStatus.OK,
+                                mimetype="application/json")
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        print(e)
     return response
 
 
@@ -131,8 +155,14 @@ def get_player(nickname):
 def ban_player(nickname):
     player = Player()
     player.nickname = nickname
-    status_response = player.ban()
-    return Response(status=status_response)
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    try:
+        status_response = player.ban()
+        response = Response(status= status_response)
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        print(e)
+    return response
 
 
 @rutas_player.route("/players/<nickname>/image", methods=["POST"])

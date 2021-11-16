@@ -41,6 +41,7 @@ class Player:
         self.password = hashplayer_received["password"]
         self.nickname = hashplayer_received["nickname"]
         self.gender = hashplayer_received["gender"]
+        self.schedule = hashplayer_received["schedule"]
 
     def make_to_json_login(self, token):
         return json.dumps({
@@ -129,8 +130,8 @@ class Player:
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
-            query = "UPDATE player SET nickname = %s, gender = %s, password = %s WHERE email = %s;"
-            values = [self.nickname, self.gender, self.password, self.email]
+            query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s WHERE email = %s;"
+            values = [self.nickname, self.gender, self.password,self.schedule, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
