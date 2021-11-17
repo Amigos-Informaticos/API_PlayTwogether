@@ -57,7 +57,7 @@ class Player:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if not self.is_registered():
             query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, schedule) VALUES " \
-                    "(%s, %s, %s, %s, %s, %s,  %s, %s, %s, %s);"
+                    "(%s, %s, %s, %s, %s, %s, %s, %s, %s);"
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
                       self.password, self.email, self.schedule]
             ConnectionDataBase.send_query(query, values)
@@ -192,7 +192,7 @@ class Player:
     @staticmethod
     def is_gender_valid(gender: str) -> Message:
         message = Message()
-        is_valid = gender.upper() == "F" or gender.upper() == "M"
+        is_valid = gender.upper() == "F" or gender.upper() == "M" or gender.upper() == "O"
         if not is_valid:
             message.valid = False
             message.message = "Invalid Gender"
