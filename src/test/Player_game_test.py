@@ -22,3 +22,9 @@ def test_get_player_game_information():
     game_name = json_info[0]
     print(json_info)
     assert game_name == "valorant"
+
+
+def test_search_player():
+    info = {"nickname": "efra"}
+    result = Player_game.find_player(info)
+    assert len(result) > 0
