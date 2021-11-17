@@ -258,7 +258,7 @@ class Player:
 
     @staticmethod
     def schedule_exist(schedule: str) -> bool:
-        query = "SELECT * FROM schedule WHERE name_schedule = %s;"
+        query = "SELECT * FROM schedule WHERE schedule_id = %s;"
         values = [schedule]
         result = ConnectionDataBase.select(query, values)
         return len(result) > 0

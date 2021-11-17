@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from http import HTTPStatus
 
 from src.data_access.ConnectionDataBase import ConnectionDataBase
@@ -122,3 +123,59 @@ class Player_game:
             ConnectionDataBase.send_query(query, values)
             print(invividual["name"])
         f.close()
+
+    @staticmethod
+    def find_player(info: dict):
+        if 'nickname' in info:
+            query = Player_game.build_query_nickname(info)
+            values = []
+            result = ConnectionDataBase.select(query, values)
+        else:
+
+            values = Player_game.build_values(info)
+
+        return result
+
+    @staticmethod
+    def build_query_nickname(info: dict) -> str:
+        query = ""
+        if 'nickname' in info:
+            nickname = info["nickname"]
+            nickname_str = f"'%{nickname}%'"
+            query = f"SELECT * FROM player  WHERE nickname LIKE {nickname_str};"
+        return query
+
+    @staticmethod
+    def buil_query(info: dict) -> str:
+        base_query = "SELECT * FROM player WHERE "
+        is_first_atribbute = True
+
+        if 'schedule' in info:
+            is_first_atribbute = False
+            base_query = base_query + "schedule = %s"
+
+        if is_first_atribbute and 'game' in info:
+            is_first_atribbute = False
+            base_query = base_query + "v"
+
+
+    @staticmethod
+    def build_values(info: dict):
+        values = []
+        if 'nickname' in info:
+            nickname = info["nickname"]
+            nickname_str = f"'%{nickname}%'"
+            values.append(info["nickname"])
+
+        return values
+
+    @staticmethod
+    def calculate_min_age(age: int) -> str:
+        today = date.today()
+        year = today.year
+        yaer_to_born = year - age
+        month = today.month
+        day = today.day
+        birth = f"{yaer_to_born}/{month}/{day}"
+        return birth
+

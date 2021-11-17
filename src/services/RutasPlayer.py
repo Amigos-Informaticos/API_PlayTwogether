@@ -213,5 +213,6 @@ def get_image(nickname):
 
 @rutas_player.route("/play", methods=["GET"])
 def play():
-    Player.validate_time()
+    info = {"nickname": "efra"}
+    result = Player_game.find_player(info)
     return Response(status=HTTPStatus.OK)
