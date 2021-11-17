@@ -52,26 +52,14 @@ def add_game_played_by_player():
                        "nickname"}
     if player_game_json is not None:
         if all(key in player_game_json for key in values_required):
-            player = Player()
-            player.email = player_game_json["email"]
             try:
-                if player.get_id() != -1:
-                    player_game = Player_game()
-                    player_game.id_player = player.player_id
-                    player_game.accountLevel = player_game_json["accountLevel"]
-                    player_game.game = player_game_json["game"]
-                    player_game.hoursPlayed = player_game_json["hoursPlayed"]
-                    player_game.note = player_game_json["note"]
-                    player_game.persongage = player_game_json["personage"]
-                    player_game.id_rank = player_game_json["id_rank"]
-                    player_game.rol = player_game_json["rol"]
-                    player_game.nickname = player_game_json["nickname"]
-                    status_server = player_game.add_player()
-                    response = Response(status=status_server)
+                player_game = Player_game()
+                if player_game.instantiate_hashmap_to_register(player_game_json):
+                    player_game.add_player()
+                    response = Response(status=HTTPStatus.OK)
             except (DatabaseError, InterfaceError) as e:
                 response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
                 print(e)
-
     return response
 
 
