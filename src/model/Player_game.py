@@ -31,6 +31,28 @@ class Player_game:
         }
         return info
 
+    def instantiate_hashmap_to_register(self, player_game_json) -> bool:
+        response = False
+        player = Player()
+        player.email = player_game_json["email"]
+        if player.get_id() != -1:
+            self.id_player = player.player_id
+            self.accountLevel = player_game_json["accountLevel"]
+            game = Game()
+            game.name = player_game_json["game"]
+            game.get_id()
+            if game.id != -1:
+                self.game = game.id
+                self.hoursPlayed = player_game_json["hoursPlayed"]
+                self.note = player_game_json["note"]
+                self.persongage = player_game_json["personage"]
+                self.id_rank = player_game_json["id_rank"]
+                self.rol = player_game_json["rol"]
+                self.nickname = player_game_json["nickname"]
+                response = True
+        return response
+
+
     def get_player_game_info(self):
         query = "SELECT * FROM player_game WHERE id_player = %s and game = %s;"
         values = [self.id_player, self.game]
