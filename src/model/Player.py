@@ -53,6 +53,13 @@ class Player:
             "gender": self.gender
         })
 
+    def make_json_players_found(self) -> dict:
+        return {
+            "nickname" : self.nickname,
+            "isVerified" : self.isVerified,
+            "birthday" : self.birthday
+        }
+
     def sign_up(self) -> bool:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if not self.is_registered():
@@ -131,7 +138,7 @@ class Player:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
             query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s WHERE email = %s;"
-            values = [self.nickname, self.gender, self.password,self.schedule, self.email]
+            values = [self.nickname, self.gender, self.password, self.schedule, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -167,6 +174,15 @@ class Player:
         return message
 
     @staticmethod
+    def is_min_age_valid(min_age: str) -> bool:
+        is_valid = False
+        if min_age.isdigit():
+            min_age = int(min_age)
+            if 30 > min_age > 0:
+                is_valid = True
+        return is_valid
+
+    @staticmethod
     def is_hour_valid(time) -> bool:
         is_valid = False
         if 0 <= time <= 23:
@@ -191,13 +207,11 @@ class Player:
 
     @staticmethod
     def is_gender_valid(gender: str) -> Message:
-        message = Message()
-        is_valid = gender.upper() == "F" or gender.upper() == "M" or gender.upper() == "O"
-        if not is_valid:
-            message.valid = False
-            message.message = "Invalid Gender"
+        is_valid = False
 
-        return message
+        is_valid = gender.upper() == "F" or gender.upper() == "M" or gender.upper() == "O"
+
+        return is_valid
 
     @staticmethod
     def calculate_age(born: date):
@@ -257,7 +271,7 @@ class Player:
         return is_valid
 
     @staticmethod
-    def schedule_exist(schedule: str) -> bool:
+    def schedule_exist(schedule: int) -> bool:
         query = "SELECT * FROM schedule WHERE schedule_id = %s;"
         values = [schedule]
         result = ConnectionDataBase.select(query, values)
