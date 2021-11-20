@@ -28,3 +28,9 @@ def test_search_player():
     info = {"nickname": "efra"}
     result = Player_game.find_player(info)
     assert len(result) > 0
+
+
+def test_calculate_age():
+    age = Player_game.calculate_min_age(22)
+    print(age)
+    assert age == "1999/11/18"
