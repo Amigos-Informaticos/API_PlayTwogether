@@ -1,4 +1,5 @@
 import io
+import json
 from ftplib import FTP
 from http import HTTPStatus
 from sqlite3 import DatabaseError, InterfaceError
@@ -127,7 +128,7 @@ def verify(nickname):
     player.nickname = nickname
     try:
         status_response = player.verify()
-        response = Response(status= status_response)
+        response = Response(status=status_response)
     except (DatabaseError, InterfaceError) as e:
         response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
         print(e)
@@ -158,7 +159,7 @@ def ban_player(nickname):
     response = Response(status=HTTPStatus.BAD_REQUEST)
     try:
         status_response = player.ban()
-        response = Response(status= status_response)
+        response = Response(status=status_response)
     except (DatabaseError, InterfaceError) as e:
         response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
         print(e)
@@ -211,8 +212,43 @@ def get_image(nickname):
 
     return response
 
+
 @rutas_player.route("/play", methods=["GET"])
 def play():
-    info = {"nickname": "efra"}
-    result = Player_game.find_player(info)
-    return Response(status=HTTPStatus.OK)
+
+    schedule = request.args.__contains__("schedule")
+
+    # info = request.json
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    # if Player_game.has_at_least_one_attribute(info) and Player_game.validate_info_to_search_player(info):
+    # Player_game.find_player_by_atributes(info)
+    # response = Response(status=HTTPStatus.OK)
+    return response
+
+
+@rutas_player.route("/players", methods=["GET"])
+def search_players():
+    response = Response(status=HTTPStatus.BAD_REQUEST)
+    info = {}
+    if request.args.__contains__("info_page"):
+        info["info_page"] = str (request.args.get("info_page"))
+        if request.args.__contains__("nickname"):
+            info["nickname"] = str(request.args.get("nickname"))
+        else:
+            if request.args.__contains__("schedule"):
+                info["schedule"] = str (request.args.get("schedule"))
+            if request.args.__contains__("gender"):
+                info["gender"] = str (request.args.get("gender"))
+            if request.args.__contains__("min_age"):
+                info["min_age"] = str (request.args.get("min_age"))
+            if request.args.__contains__("game"):
+                info["game"] = str (request.args.get("game"))
+
+    if len(info) > 1:
+        if Player_game.has_at_least_one_attribute(info) and Player_game.validate_info_to_search_player(info):
+            result = Player_game.find_player_by_atributes(info)
+            if len(result) > 0:
+                players_json = json.dumps(result)
+                response = Response(players_json, status=HTTPStatus.OK, mimetype="application/json")
+
+    return response

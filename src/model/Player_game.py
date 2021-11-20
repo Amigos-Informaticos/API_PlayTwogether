@@ -31,6 +31,9 @@ class Player_game:
         }
         return info
 
+
+
+
     def instantiate_hashmap_to_register(self, player_game_json) -> bool:
         response = False
         player = Player()
@@ -51,7 +54,6 @@ class Player_game:
                 self.nickname = player_game_json["nickname"]
                 response = True
         return response
-
 
     def get_player_game_info(self):
         query = "SELECT * FROM player_game WHERE id_player = %s and game = %s;"
@@ -159,27 +161,147 @@ class Player_game:
         return result
 
     @staticmethod
-    def build_query_nickname(info: dict) -> str:
+    def has_at_least_one_attribute(info) -> bool:
+        return "game" in info or "gender" in info or "min_age" in info or "schedule" in info or "nickname" in info
+
+    @staticmethod
+    def validate_info_to_search_player(info) -> bool:
+        is_valid = True
+        page = "not_digit"
+
+        if "info_page" in info:
+            page = str(info["info_page"])
+
+        if page.isdigit():
+
+            if "nickname" in info:
+                nickname = str(info["nickname"])
+                is_valid = Player.is_nickname(nickname)
+            else:
+                if "gender" in info:
+                    gender = str(info["gender"])
+                    is_valid = Player.is_gender_valid(gender)
+                if is_valid and "min_age" in info:
+                    min_age = str(info["min_age"])
+                    is_valid = Player.is_min_age_valid(min_age)
+                if is_valid and "schedule" in info:
+                    schedule = str(info["schedule"])
+                    if schedule.isdigit():
+                        schedule_int = int(schedule)
+                        is_valid = Player.schedule_exist(schedule)
+                    else:
+                        is_valid = False
+
+                if is_valid and "game" in info:
+                    game_name = str(info["game"])
+                    game = Game()
+                    game.name = game_name
+                    game.get_id()
+                    is_valid = game.id != -1
+        else:
+            is_valid = False
+
+        return is_valid
+
+
+    @staticmethod
+    def build_query_nickname(info) -> str:
         query = ""
         if 'nickname' in info:
             nickname = info["nickname"]
             nickname_str = f"'%{nickname}%'"
             query = f"SELECT * FROM player  WHERE nickname LIKE {nickname_str};"
+
         return query
 
     @staticmethod
-    def buil_query(info: dict) -> str:
-        base_query = "SELECT * FROM player WHERE "
-        is_first_atribbute = True
+    def find_player_by_atributes(info):
+        has_query_game = False
+        is_first_player_atribute = True
+        base_query = "SELECT nickname, isVerified, birthday FROM player"
+        query_game = " INNER JOIN player_game WHERE player_game.game = %s and player_game.id_player = player.player_id "
+        query_gender = " player.gender = %s "
+        query_birthday = " player.birthday > %s "
+        query_schedule = " player.schedule = %s "
+        query_final = " LIMIT %s, 10"
+        and_query = "AND"
+        where_query = " WHERE "
+        birthday = None
+        values = []
+        players_found = []
 
-        if 'schedule' in info:
-            is_first_atribbute = False
-            base_query = base_query + "schedule = %s"
+        if "game" in info:
+            base_query = base_query + query_game
+            has_query_game = True
+            game_name = str(info["game"])
+            game = Game()
+            game.name = game_name
+            game.get_id()
+            values.append(game.id)
 
-        if is_first_atribbute and 'game' in info:
-            is_first_atribbute = False
-            base_query = base_query + "v"
+        if "gender" in info:
+            gender = str(info["gender"])
+            values.append(gender)
 
+            if has_query_game and "gender" in info:
+                base_query = base_query + and_query + query_gender
+                is_first_player_atribute = False
+            elif "gender" in info:
+                base_query = base_query + where_query + query_gender
+                is_first_player_atribute = False
+
+        if "min_age" in info:
+            age = info["min_age"]
+            birthday = Player_game.calculate_min_age(age)
+            values.append(birthday)
+
+            if has_query_game and "min_age" in info and not is_first_player_atribute:
+                base_query = base_query + and_query + query_birthday
+            elif has_query_game and "min_age" in info and is_first_player_atribute:
+                base_query = base_query + where_query + query_birthday
+                is_first_player_atribute = False
+            elif not has_query_game and "min_age" in info and is_first_player_atribute:
+                base_query = base_query + where_query + query_birthday
+                is_first_player_atribute = False
+            elif not has_query_game and not is_first_player_atribute and "min_age" in info:
+                base_query = base_query + and_query + query_birthday
+
+        if "schedule" in info:
+            schedule = int(info["schedule"])
+            values.append(schedule)
+
+            if has_query_game and not is_first_player_atribute and "schedule" in info:
+                base_query = base_query + and_query + query_schedule
+            elif has_query_game and is_first_player_atribute and "schedule" in info:
+                base_query = base_query + where_query + query_schedule
+                is_first_player_atribute = False
+            elif not has_query_game and is_first_player_atribute and "schedule" in info:
+                base_query = base_query + where_query + query_schedule
+            elif not has_query_game and not is_first_player_atribute and "schedule" in info:
+                base_query = base_query + and_query + query_schedule
+
+        base_query = base_query + query_final
+        page_info = int(info["info_page"])
+        page_info = page_info * 10
+        values.append(page_info)
+
+        print(base_query)
+        print(values)
+
+        result = ConnectionDataBase.select(base_query, values)
+
+        if result:
+            for individual_player in result:
+                player_aux = Player()
+                player_aux.nickname = individual_player["nickname"]
+                player_aux.birthday = str (individual_player["birthday"])
+                player_aux.isVerified = individual_player["isVerified"]
+                players_found.append(player_aux.make_json_players_found())
+
+        print(players_found)
+        print("IMPRIMIÓ LOS PLAYERS ARRIBA")
+
+        return players_found
 
     @staticmethod
     def build_values(info: dict):
@@ -199,5 +321,5 @@ class Player_game:
         month = today.month
         day = today.day
         birth = f"{yaer_to_born}/{month}/{day}"
+        print(birth)
         return birth
-
