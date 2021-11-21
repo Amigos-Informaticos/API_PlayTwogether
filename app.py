@@ -1,8 +1,8 @@
 from datetime import timedelta
 from flask import Flask
-from services.RutasPlayer import rutas_player
+from src.services.RutasPlayer import rutas_player
 from flask_cors import CORS
-from services.GameRoutes import game_routes
+from src.services.GameRoutes import game_routes
 from src.services.ReportRoutes import report_routes
 
 app = Flask(__name__)
