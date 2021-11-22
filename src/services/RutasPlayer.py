@@ -1,3 +1,4 @@
+import ftplib
 import io
 import json
 from ftplib import FTP
@@ -190,25 +191,27 @@ def add_image(nickname):
 @rutas_player.route("/players/<nickname>/image", methods=["GET"])
 def get_image(nickname):
     response = Response(status=HTTPStatus.NOT_FOUND)
-    # ftp_connection = FTP("amigosinformaticos.ddns.net")
-    # ftp_connection.login("pi", "beethoven", "noaccount")
-    # ftp_connection.cwd("playt")
+    ftp_connection = FTP("amigosinformaticos.ddns.net")
+    ftp_connection.login("pi", "beethoven", "noaccount")
+    ftp_connection.cwd("playt")
+    flag = False
 
-    # image = NamedTemporaryFile(mode="wrb+")
+    image = NamedTemporaryFile()
 
-    # try:
-    #  with open(image.name, "wb+") as open_file:
-    #     command = f"RETR {nickname}.png"
-    #    ftp_connection.retrbinary(command, open_file.write)
+    try:
+        with open(image.name, "wb+") as open_file:
+            command = f"RETR {nickname}.png"
+            ftp_connection.retrbinary(command, open_file.write)
+            flag = True
+    except Exception as e:
+        print(e)
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    finally:
+        ftp_connection.close()
 
-    # except:
-
-    #   response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-    # finally:
-    #   ftp_connection.close()
-
-    # with open(image.name, "rb") as open_file:
-    #   response = send_file(io.BytesIO(open_file.read()), mimetype="image/png", as_attachment=False)
+    if flag:
+        with open(image.name, "rb") as open_file:
+            response = send_file(io.BytesIO(open_file.read()), mimetype="image/png", as_attachment=False)
 
     return response
 
