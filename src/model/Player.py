@@ -2,6 +2,7 @@ import json
 from datetime import datetime, date
 from http import HTTPStatus
 
+import cryptocode as cryptocode
 from email_validator import validate_email, EmailNotValidError
 from src.data_access.ConnectionDataBase import ConnectionDataBase
 from src.model.Message import Message
@@ -42,6 +43,7 @@ class Player:
         self.nickname = hashplayer_received["nickname"]
         self.gender = hashplayer_received["gender"]
         self.schedule = hashplayer_received["schedule"]
+        self.birthday = hashplayer_received["birthday"]
 
     def make_to_json_login(self, token):
         return json.dumps({
@@ -65,8 +67,9 @@ class Player:
         if not self.is_registered():
             query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, schedule) VALUES " \
                     "(%s, %s, %s, %s, %s, %s, %s, %s, %s);"
+            password_encryp =Player.encryp_password(self.password)
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
-                      self.password, self.email, self.schedule]
+                      password_encryp, self.email, self.schedule]
             ConnectionDataBase.send_query(query, values)
             status = HTTPStatus.CREATED
         else:
@@ -95,7 +98,8 @@ class Player:
     def login(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
-        values = [self.email, self.password]
+        password_encryp = Player.encryp_password(self.password)
+        values = [self.email, password_encryp]
         result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             self.nickname = result[0]["nickname"]
@@ -109,8 +113,8 @@ class Player:
 
     def is_registered(self) -> bool:
         is_registered = False
-        query = "SELECT * FROM player WHERE email = %s;"
-        values = [self.email]
+        query = "SELECT * FROM player WHERE email = %s OR nickname = %s;"
+        values = [self.email, self.nickname]
         result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             is_registered = True
@@ -137,8 +141,9 @@ class Player:
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
-            query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s WHERE email = %s;"
-            values = [self.nickname, self.gender, self.password, self.schedule, self.email]
+            query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s, birthday = %s WHERE" \
+                    " email = %s;"
+            values = [self.nickname, self.gender, self.password, self.schedule, self.birthday, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -146,32 +151,14 @@ class Player:
         return status
 
     @staticmethod
-    def is_email(email) -> Message:
-        is_valid = Message()
+    def is_email(email):
+        is_valid = False
         try:
             valid = validate_email(email)
-            is_valid.valid = True
+            is_valid = True
         except EmailNotValidError as e:
-            print(str(e))
-            is_valid.valid = False
-            is_valid.message = "Invalid Email"
+            is_valid = False
         return is_valid
-
-    @staticmethod
-    def is_time_to_play_valid(start_time: str, end_time: str) -> Message:
-        is_valid = False
-        message = Message()
-        if start_time.isdigit() and end_time.isdigit():
-            int_start_time = int(start_time)
-            int_end_time = int(end_time)
-            if Player.is_hour_valid(int_start_time) and Player.is_hour_valid(int_end_time):
-                is_valid = True
-
-        if not is_valid:
-            message.valid = False
-            message.message = "Invalid time to play"
-
-        return message
 
     @staticmethod
     def is_min_age_valid(min_age: str) -> bool:
@@ -191,22 +178,16 @@ class Player:
         return is_valid
 
     @staticmethod
-    def is_nickname(nickname: str) -> Message:
+    def is_nickname(nickname: str):
         is_valid = False
-        message = Message()
         if 25 >= len(nickname) >= 4:
             contains_space = ' ' in nickname
             if not contains_space:
                 is_valid = True
-
-        if not is_valid:
-            message.message = "Invalid nickname"
-            message.valid = False
-
-        return message
+        return is_valid
 
     @staticmethod
-    def is_gender_valid(gender: str) -> Message:
+    def is_gender_valid(gender: str):
         is_valid = False
 
         is_valid = gender.upper() == "F" or gender.upper() == "M" or gender.upper() == "O"
@@ -219,20 +200,16 @@ class Player:
         return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
     @staticmethod
-    def is_birthday_valid(birthday: str) -> Message:
+    def is_birthday_valid(birthday: str):
         is_valid = False
-        message = Message()
+
         if Player.is_format_date(birthday):
             date = datetime.strptime(birthday, '%Y-%m-%d')
             age = Player.calculate_age(date)
             if 100 >= age > 12:
                 is_valid = True
 
-        if not is_valid:
-            message.valid = False
-            message.message = "Invalid birthday"
-
-        return message
+        return is_valid
 
     @staticmethod
     def is_format_date(date_text) -> bool:
@@ -275,7 +252,8 @@ class Player:
         query = "SELECT * FROM schedule WHERE schedule_id = %s;"
         values = [schedule]
         result = ConnectionDataBase.select(query, values)
-        return len(result) > 0
+        exist = len(result) > 0
+        return exist
 
     def delete(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
@@ -326,3 +304,10 @@ class Player:
                 "isVerified": self.isVerified
             })
         return player_json
+
+    @staticmethod
+    def encryp_password(password: str) -> str:
+        password_encryp = cryptocode.encrypt(password, "beethoven")
+        return password_encryp
+
+

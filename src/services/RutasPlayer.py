@@ -90,13 +90,14 @@ def is_admin():
 def update():
     response = Response(status=HTTPStatus.BAD_REQUEST)
     player_received = request.json
-    values_required = {"email", "password", "gender", "nickname", "schedule"}
+    values_required = {"email", "password", "gender", "nickname", "schedule", "birthday"}
     if all(key in player_received for key in values_required):
         player = Player()
         try:
-            player.instantiate_hashmap_to_update(player_received)
-            status_from_model = player.update()
-            response = Response(status=status_from_model)
+            if Player.validate_dict_to_singup(player_received):
+                player.instantiate_hashmap_to_update(player_received)
+                status_from_model = player.update()
+                response = Response(status=status_from_model)
         except (DatabaseError, InterfaceError) as e:
             response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
             print(e)
@@ -154,6 +155,7 @@ def get_player(nickname):
 
 
 @rutas_player.route("/players/<nickname>/ban", methods=["PATCH"])
+@Auth.administrator_permission()
 def ban_player(nickname):
     player = Player()
     player.nickname = nickname
@@ -168,6 +170,7 @@ def ban_player(nickname):
 
 
 @rutas_player.route("/players/<nickname>/image", methods=["POST"])
+@Auth.requires_authentication_in_header()
 def add_image(nickname):
     image = request.files["image"]
     response = Response(status=HTTPStatus.BAD_REQUEST)
