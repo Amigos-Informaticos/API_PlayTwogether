@@ -1,7 +1,9 @@
+import hashlib
 import json
 from datetime import datetime, date
 from http import HTTPStatus
 
+import bcrypt as bcrypt
 import cryptocode as cryptocode
 from email_validator import validate_email, EmailNotValidError
 from src.data_access.ConnectionDataBase import ConnectionDataBase
@@ -67,7 +69,7 @@ class Player:
         if not self.is_registered():
             query = "INSERT INTO player (nickname, gender, birthday, status, isModerator, isVerified, password, email, schedule) VALUES " \
                     "(%s, %s, %s, %s, %s, %s, %s, %s, %s);"
-            password_encryp =Player.encryp_password(self.password)
+            password_encryp = Player.encode_password(self.password)
             values = [self.nickname, self.gender, self.birthday, self.status, self.isModerator, self.isVerified,
                       password_encryp, self.email, self.schedule]
             ConnectionDataBase.send_query(query, values)
@@ -98,8 +100,8 @@ class Player:
     def login(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
-        password_encryp = Player.encryp_password(self.password)
-        values = [self.email, password_encryp]
+        password_encode = Player.encode_password(self.password)
+        values = [self.email, password_encode]
         result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
             self.nickname = result[0]["nickname"]
@@ -305,9 +307,13 @@ class Player:
             })
         return player_json
 
-    @staticmethod
-    def encryp_password(password: str) -> str:
-        password_encryp = cryptocode.encrypt(password, "beethoven")
-        return password_encryp
 
+    @staticmethod
+    def encode_password(password: str) -> str:
+        # encoding GeeksforGeeks using encode()
+        # then sending to md5()
+        result = hashlib.md5(password.encode())
+        password_encode_string = result.hexdigest()
+        # printing the equivalent hexadecimal value.
+        return password_encode_string
 
