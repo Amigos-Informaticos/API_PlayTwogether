@@ -94,3 +94,10 @@ def test_is_register_exception():
     except Error:
         expect_occurred = True
     assert expect_occurred
+
+def test_encrypt():
+    password = Player.encode_password("1234567")
+    print("La contra es")
+    print(password)
+    password_esperada = Player.encode_password("1234567")
+    assert password == password_esperada
