@@ -3,11 +3,8 @@ import json
 from datetime import datetime, date
 from http import HTTPStatus
 
-import bcrypt as bcrypt
-import cryptocode as cryptocode
 from email_validator import validate_email, EmailNotValidError
 from src.data_access.ConnectionDataBase import ConnectionDataBase
-from src.model.Message import Message
 
 
 class Player:
@@ -59,9 +56,9 @@ class Player:
 
     def make_json_players_found(self) -> dict:
         return {
-            "nickname" : self.nickname,
-            "isVerified" : self.isVerified,
-            "birthday" : self.birthday
+            "nickname": self.nickname,
+            "isVerified": self.isVerified,
+            "birthday": self.birthday
         }
 
     def sign_up(self) -> bool:
@@ -143,9 +140,10 @@ class Player:
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
+            password_encoded = Player.encode_password(self.password)
             query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s, birthday = %s WHERE" \
                     " email = %s;"
-            values = [self.nickname, self.gender, self.password, self.schedule, self.birthday, self.email]
+            values = [self.nickname, self.gender, password_encoded, self.schedule, self.birthday, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -307,7 +305,6 @@ class Player:
             })
         return player_json
 
-
     @staticmethod
     def encode_password(password: str) -> str:
         # encoding GeeksforGeeks using encode()
@@ -316,4 +313,3 @@ class Player:
         password_encode_string = result.hexdigest()
         # printing the equivalent hexadecimal value.
         return password_encode_string
-
