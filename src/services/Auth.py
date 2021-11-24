@@ -66,7 +66,10 @@ class Auth:
                 if token is not None:
                     values = Auth.decode_token(token)
                     if values is not None:
-                        if str(values["email"]) == str(player_received["email"]):
+                        if "email" in player_received and str(values["email"]) == str(player_received["email"]):
+                            response = operation(*args, **kwargs)
+                        elif request.headers.__contains__("email") and \
+                                str(request.headers.get("email")) == str(values["email"]):
                             response = operation(*args, **kwargs)
                         else:
                             response = Response(status=HTTPStatus.FORBIDDEN)
@@ -77,6 +80,30 @@ class Auth:
                 return response
 
             return update_wrapper(verify_authentication, operation)
+
+        return decorator
+
+    @staticmethod
+    def requires_authentication_in_header():
+        def decorator(operation):
+            def verify_authentication(*args, **kwargs):
+                token = request.headers.get("token")
+                if token is not None:
+                    values = Auth.decode_token(token)
+                    if values is not None:
+                        if request.headers.__contains__("email") and \
+                                str(request.headers.get("email")) == str(values["email"]):
+                            response = operation(*args, **kwargs)
+                        else:
+                            response = Response(status=HTTPStatus.FORBIDDEN)
+                    else:
+                        response = Response(status=HTTPStatus.FORBIDDEN)
+                else:
+                    response = Response(status=HTTPStatus.FORBIDDEN)
+                return response
+
+            return update_wrapper(verify_authentication, operation)
+
         return decorator
 
     @staticmethod
