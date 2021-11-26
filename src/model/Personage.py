@@ -12,7 +12,7 @@ class Personage:
         values = [self.id]
         result = ConnectionDataBase.select(query, values)
         if result is not None:
-            self.name = str(result[0]["name"])
+            self.name = str(result[0]["name_personage"])
 
     def make_json(self) -> dict:
         return {
