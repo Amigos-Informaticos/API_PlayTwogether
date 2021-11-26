@@ -3,11 +3,8 @@ import json
 from datetime import datetime, date
 from http import HTTPStatus
 
-import bcrypt as bcrypt
-import cryptocode as cryptocode
 from email_validator import validate_email, EmailNotValidError
 from src.data_access.ConnectionDataBase import ConnectionDataBase
-from src.model.Message import Message
 
 
 class Player:
@@ -23,6 +20,7 @@ class Player:
         self.email = None
         self.player_id = None
         self.schedule = None
+        self.reports = -1
 
     def instantiate_hashmap_to_register(self, hash_player_received: dict):
         self.nickname = hash_player_received["nickname"]
@@ -59,9 +57,15 @@ class Player:
 
     def make_json_players_found(self) -> dict:
         return {
-            "nickname" : self.nickname,
-            "isVerified" : self.isVerified,
-            "birthday" : self.birthday
+            "nickname": self.nickname,
+            "isVerified": self.isVerified,
+            "birthday": self.birthday
+        }
+
+    def make_json_players_reports(self) -> dict:
+        return {
+            "nickname": self.nickname,
+            "reports": self.reports
         }
 
     def sign_up(self) -> bool:
@@ -143,9 +147,10 @@ class Player:
     def update(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
+            password_encoded = Player.encode_password(self.password)
             query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s, birthday = %s WHERE" \
                     " email = %s;"
-            values = [self.nickname, self.gender, self.password, self.schedule, self.birthday, self.email]
+            values = [self.nickname, self.gender, password_encoded, self.schedule, self.birthday, self.email]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -260,8 +265,8 @@ class Player:
     def delete(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         if self.is_registered():
-            query = "UPDATE player SET status = 2 WHERE email = %s AND status = 1;"
-            values = [self.email]
+            query = "UPDATE player SET status = 2 WHERE nickname = %s AND status = 1;"
+            values = [self.nickname]
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
@@ -307,7 +312,6 @@ class Player:
             })
         return player_json
 
-
     @staticmethod
     def encode_password(password: str) -> str:
         # encoding GeeksforGeeks using encode()
@@ -316,4 +320,3 @@ class Player:
         password_encode_string = result.hexdigest()
         # printing the equivalent hexadecimal value.
         return password_encode_string
-

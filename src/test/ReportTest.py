@@ -23,6 +23,15 @@ def test_validate_reason_word():
 
 def test_report_doesnt_exist():
     report = Report()
-    report.informer =""
-    report.informed = ""
+    report.informer ="rendon.luisgerardo@gmail.com"
+    report.informed = "grimlicrash@outlook.com"
+    report.reason = 2
+    assert not report.report_exist()
 
+
+
+def test_increase_reports_player():
+    report = Report()
+    report.informed = 6
+    increased = report.increase_reports_player()
+    assert increased

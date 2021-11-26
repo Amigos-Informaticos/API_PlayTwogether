@@ -105,21 +105,17 @@ def update():
     return response
 
 
-@rutas_player.route("/players", methods=["DELETE"])
-@Auth.requires_authentication()
-def delete():
-    status = HTTPStatus.BAD_REQUEST
-    player_received = request.json
-    values_required = {"email"}
-    if all(key in player_received for key in values_required):
-        player = Player()
-        try:
-            player.email = player_received["email"]
-            status = player.delete()
-            response = Response(status=status)
-        except (DatabaseError, InterfaceError) as e:
-            response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-            print(e)
+@rutas_player.route("/players/<nickname>", methods=["DELETE"])
+@Auth.requires_authentication_in_header()
+def delete(nickname):
+    player = Player()
+    try:
+        player.nickname = nickname
+        status = player.delete()
+        response = Response(status=status)
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        print(e)
     return response
 
 

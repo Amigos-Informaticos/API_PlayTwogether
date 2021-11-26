@@ -7,6 +7,7 @@ from mysql.connector.errors import DatabaseError, InterfaceError
 from src.model.Game import Game
 from src.model.Player import Player
 from src.model.Player_game import Player_game
+from src.services.Auth import Auth
 
 game_routes = Blueprint("game_routes", __name__)
 
@@ -44,6 +45,7 @@ def get_game_played_by_player(nickname, game):
 
 
 @game_routes.route("/player/game", methods=["POST"])
+@Auth.requires_authentication()
 def add_game_played_by_player():
     player_game_json = request.json
     status_server = HTTPStatus.BAD_REQUEST
