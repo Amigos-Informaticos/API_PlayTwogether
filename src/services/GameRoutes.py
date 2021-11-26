@@ -80,3 +80,18 @@ def get_games_played_by_player(nickname):
         print(e)
 
     return response
+
+@game_routes.route("/game/<name>/personages")
+def get_personages(name):
+    response = Response(status=HTTPStatus.NOT_FOUND)
+    try:
+        game = Game()
+        game.name = name
+        game.get_id()
+        if game.id != -1:
+            personages = game.get_personages()
+            personages_json = json.dumps(personages)
+            response = Response(personages_json, status=HTTPStatus.OK, mimetype="application/json")
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+    return  response
