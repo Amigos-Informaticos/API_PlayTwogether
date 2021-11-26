@@ -34,6 +34,12 @@ class Report:
             instanciated = True
         return instanciated
 
+    def informer_and_email_valid(self, email) -> bool:
+        query = "SELECT nickname FROM player WHERE email = %s and player_id = %s"
+        values = [email, self.informer]
+        result = ConnectionDataBase.select(query, values)
+        return len(result) > 0
+
     @staticmethod
     def exist_reason(reason: int) -> bool:
         query = "SELECT * FROM reason WHERE id_reason = %s;"

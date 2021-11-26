@@ -16,11 +16,14 @@ def add():
     status_response = HTTPStatus.BAD_REQUEST
     response = Response(status=status_response)
     report_json = request.json
+    print(report_json)
     values_required = {"informed", "informer", "reason", "comment", "email"}
+    email = report_json["email"]
     report = Report()
     try:
         if report_json is not None and all(key in report_json for key in values_required) and \
-                Report.validate_info(report_json) and report.instanciate(report_json):
+                Report.validate_info(report_json) and report.instanciate(report_json) and \
+                report.informer_and_email_valid(email):
             status_response = report.add()
             response = Response(status=status_response)
     except (DatabaseError, InterfaceError) as e:
