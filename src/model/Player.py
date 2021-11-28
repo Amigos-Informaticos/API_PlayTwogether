@@ -232,10 +232,15 @@ class Player:
     @staticmethod
     def is_password_valid(password: str) -> bool:
         is_valid = False
-        if len(password) > 0:
+        if 21 > len(password) > 7 and not password.islower() and Player.password_contains_number(password):
             is_valid = True
 
         return is_valid
+
+    @staticmethod
+    def password_contains_number(password) -> bool:
+        contains = any(char_.isdigit() for char_ in password)
+        return contains
 
     @staticmethod
     def validate_dict_to_singup(dict) -> bool:

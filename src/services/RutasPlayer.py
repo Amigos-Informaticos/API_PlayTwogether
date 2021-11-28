@@ -169,21 +169,26 @@ def ban_player(nickname):
 @Auth.requires_authentication_in_header()
 def add_image(nickname):
     image = request.files["image"]
-    response = Response(status=HTTPStatus.BAD_REQUEST)
-    saved = False
-    ftp_connection = FTP("amigosinformaticos.ddns.net")
-    ftp_connection.login("pi", "beethoven", "noaccount")
-    ftp_connection.cwd("playt")
-    command = f"STOR {nickname}.png"
-    try:
-        code = ftp_connection.storbinary(command, image.stream)
-        code = code.split(" ")[0]
-        if code == "226":
-            response = Response(status=HTTPStatus.CREATED)
-    except:
-        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-    finally:
-        ftp_connection.close()
+    if image.content_type == "image/png" or image.content_type == "image/jpeg":
+        ftp_connection = FTP("amigosinformaticos.ddns.net")
+        ftp_connection.login("pi", "beethoven", "noaccount")
+        ftp_connection.cwd("playt")
+        command = f"STOR {nickname}.png"
+        try:
+            code = ftp_connection.storbinary(command, image.stream)
+            code = code.split(" ")[0]
+            if code == "226":
+                response = Response(status=HTTPStatus.CREATED)
+            else:
+                response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        except:
+            response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        finally:
+            ftp_connection.close()
+
+    else:
+        response = Response(status=HTTPStatus.BAD_REQUEST)
+
     return response
 
 

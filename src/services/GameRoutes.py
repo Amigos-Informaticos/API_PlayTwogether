@@ -57,8 +57,11 @@ def add_game_played_by_player():
             try:
                 player_game = Player_game()
                 if player_game.instantiate_hashmap_to_register(player_game_json):
-                    player_game.add_player()
-                    response = Response(status=HTTPStatus.OK)
+                    if not player_game.player_game_exist():
+                        player_game.add_player()
+                        response = Response(status=HTTPStatus.CREATED)
+                    else:
+                        response = Response(status=HTTPStatus.CONFLICT)
             except (DatabaseError, InterfaceError) as e:
                 response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
                 print(e)
