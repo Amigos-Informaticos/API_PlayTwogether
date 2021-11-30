@@ -153,7 +153,7 @@ class Player_game:
     @staticmethod
     def find_player(info: dict):
         if 'nickname' in info:
-            query = Player_game.build_query_nickname(info)
+            query = Player_game.find_player_by_nickname(info)
             values = []
             result = ConnectionDataBase.select(query, values)
         else:
@@ -207,12 +207,12 @@ class Player_game:
 
 
     @staticmethod
-    def build_query_nickname(info) -> str:
+    def find_player_by_nickname(info) -> str:
         query = ""
         if 'nickname' in info:
             nickname = info["nickname"]
             nickname_str = f"'%{nickname}%'"
-            query = f"SELECT * FROM player  WHERE nickname LIKE {nickname_str};"
+            query = f"SELECT nickname, isVerified, birthday FROM player  WHERE nickname LIKE {nickname_str} "
 
         return query
 
@@ -220,7 +220,7 @@ class Player_game:
     def find_player_by_atributes(info):
         has_query_game = False
         is_first_player_atribute = True
-        base_query = "SELECT nickname, isVerified, birthday FROM player"
+        base_query = "SELECT player.nickname, isVerified, birthday FROM player"
         query_game = " INNER JOIN player_game WHERE player_game.game = %s and player_game.id_player = player.player_id "
         query_gender = " player.gender = %s "
         query_birthday = " player.birthday > %s "
@@ -232,55 +232,58 @@ class Player_game:
         values = []
         players_found = []
 
-        if "game" in info:
-            base_query = base_query + query_game
-            has_query_game = True
-            game_name = str(info["game"])
-            game = Game()
-            game.name = game_name
-            game.get_id()
-            values.append(game.id)
+        if "nickname" in info:
+            base_query = Player_game.find_player_by_nickname(info)
+        else:
+            if "game" in info:
+                base_query = base_query + query_game
+                has_query_game = True
+                game_name = str(info["game"])
+                game = Game()
+                game.name = game_name
+                game.get_id()
+                values.append(game.id)
 
-        if "gender" in info:
-            gender = str(info["gender"])
-            values.append(gender)
+            if "gender" in info:
+                gender = str(info["gender"])
+                values.append(gender)
 
-            if has_query_game and "gender" in info:
-                base_query = base_query + and_query + query_gender
-                is_first_player_atribute = False
-            elif "gender" in info:
-                base_query = base_query + where_query + query_gender
-                is_first_player_atribute = False
+                if has_query_game and "gender" in info:
+                    base_query = base_query + and_query + query_gender
+                    is_first_player_atribute = False
+                elif "gender" in info:
+                    base_query = base_query + where_query + query_gender
+                    is_first_player_atribute = False
 
-        if "min_age" in info:
-            age = info["min_age"]
-            birthday = Player_game.calculate_min_age(age)
-            values.append(birthday)
+            if "min_age" in info:
+                age = info["min_age"]
+                birthday = Player_game.calculate_min_age(age)
+                values.append(birthday)
 
-            if has_query_game and "min_age" in info and not is_first_player_atribute:
-                base_query = base_query + and_query + query_birthday
-            elif has_query_game and "min_age" in info and is_first_player_atribute:
-                base_query = base_query + where_query + query_birthday
-                is_first_player_atribute = False
-            elif not has_query_game and "min_age" in info and is_first_player_atribute:
-                base_query = base_query + where_query + query_birthday
-                is_first_player_atribute = False
-            elif not has_query_game and not is_first_player_atribute and "min_age" in info:
-                base_query = base_query + and_query + query_birthday
+                if has_query_game and "min_age" in info and not is_first_player_atribute:
+                    base_query = base_query + and_query + query_birthday
+                elif has_query_game and "min_age" in info and is_first_player_atribute:
+                    base_query = base_query + where_query + query_birthday
+                    is_first_player_atribute = False
+                elif not has_query_game and "min_age" in info and is_first_player_atribute:
+                    base_query = base_query + where_query + query_birthday
+                    is_first_player_atribute = False
+                elif not has_query_game and not is_first_player_atribute and "min_age" in info:
+                    base_query = base_query + and_query + query_birthday
 
-        if "schedule" in info:
-            schedule = int(info["schedule"])
-            values.append(schedule)
+            if "schedule" in info:
+                schedule = int(info["schedule"])
+                values.append(schedule)
 
-            if has_query_game and not is_first_player_atribute and "schedule" in info:
-                base_query = base_query + and_query + query_schedule
-            elif has_query_game and is_first_player_atribute and "schedule" in info:
-                base_query = base_query + where_query + query_schedule
-                is_first_player_atribute = False
-            elif not has_query_game and is_first_player_atribute and "schedule" in info:
-                base_query = base_query + where_query + query_schedule
-            elif not has_query_game and not is_first_player_atribute and "schedule" in info:
-                base_query = base_query + and_query + query_schedule
+                if has_query_game and not is_first_player_atribute and "schedule" in info:
+                    base_query = base_query + and_query + query_schedule
+                elif has_query_game and is_first_player_atribute and "schedule" in info:
+                    base_query = base_query + where_query + query_schedule
+                    is_first_player_atribute = False
+                elif not has_query_game and is_first_player_atribute and "schedule" in info:
+                    base_query = base_query + where_query + query_schedule
+                elif not has_query_game and not is_first_player_atribute and "schedule" in info:
+                    base_query = base_query + and_query + query_schedule
 
         base_query = base_query + query_final
         page_info = int(info["info_page"])
