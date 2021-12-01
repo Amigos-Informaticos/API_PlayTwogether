@@ -126,3 +126,10 @@ def test_not_password_valid_short():
 
 def test_is_pasword_valid():
     assert Player.is_password_valid("Holaaaaaaaa11")
+
+
+def test_encryp_pass():
+    password = Player.encode_password("Beethoven1")
+    print("La password es: ")
+    print(password)
+    assert True
