@@ -39,11 +39,13 @@ class Player:
 
     def instantiate_hashmap_to_update(self, hashplayer_received: dict):
         self.email = hashplayer_received["email"]
-        self.password = hashplayer_received["password"]
+        if "password" in hashplayer_received:
+            self.password = hashplayer_received["password"]
         self.nickname = hashplayer_received["nickname"]
         self.gender = hashplayer_received["gender"]
         self.schedule = hashplayer_received["schedule"]
         self.birthday = hashplayer_received["birthday"]
+
 
     def make_to_json_login(self, token):
         return json.dumps({
@@ -52,7 +54,8 @@ class Player:
             "email": self.email,
             "token": token,
             "birthday": self.birthday.strftime('%Y-%m-%d'),
-            "gender": self.gender
+            "gender": self.gender,
+            "schedule" : self.schedule
         })
 
     def make_json_players_found(self) -> dict:
@@ -105,6 +108,7 @@ class Player:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
         query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
         password_encode = Player.encode_password(self.password)
+        print(password_encode)
         values = [self.email, password_encode]
         result = ConnectionDataBase.select(query, values)
         if len(result) > 0:
@@ -112,6 +116,7 @@ class Player:
             self.isModerator = result[0]["isModerator"]
             self.birthday = result[0]["birthday"]
             self.gender = result[0]["gender"]
+            self.schedule = result[0]["schedule"]
             status = HTTPStatus.OK
         else:
             status = HTTPStatus.NOT_FOUND
@@ -144,9 +149,9 @@ class Player:
             is_registered = True
         return is_registered
 
-    def update(self) -> int:
+    def update_all_information(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        if self.is_registered():
+        if not Player.nickname_exist_to_update(self.nickname, self.email):
             password_encoded = Player.encode_password(self.password)
             query = "UPDATE player SET nickname = %s, gender = %s, password = %s, schedule = %s, birthday = %s WHERE" \
                     " email = %s;"
@@ -154,7 +159,19 @@ class Player:
             if ConnectionDataBase.send_query(query, values):
                 status = HTTPStatus.OK
         else:
-            status = HTTPStatus.NOT_FOUND
+            status = HTTPStatus.CONFLICT
+        return status
+
+    def update_without_password(self) -> int:
+        status = HTTPStatus.NOT_FOUND
+        if not Player.nickname_exist_to_update(self.nickname, self.email):
+            query = "UPDATE player SET nickname = %s, gender = %s, schedule = %s, birthday = %s WHERE" \
+                    " email = %s;"
+            values = [self.nickname, self.gender, self.schedule, self.birthday, self.email]
+            if ConnectionDataBase.send_query(query, values):
+                status = HTTPStatus.OK
+        else:
+            status = HTTPStatus.CONFLICT
         return status
 
     @staticmethod
@@ -232,26 +249,39 @@ class Player:
     @staticmethod
     def is_password_valid(password: str) -> bool:
         is_valid = False
-        if len(password) > 0:
+        if 21 > len(password) > 7 and not password.islower() and Player.password_contains_number(password):
             is_valid = True
 
         return is_valid
 
     @staticmethod
+    def password_contains_number(password) -> bool:
+        contains = any(char_.isdigit() for char_ in password)
+        return contains
+
+    @staticmethod
     def validate_dict_to_singup(dict) -> bool:
         is_valid = False
+        contains_password = False
         nickname = str(dict["nickname"])
         gender = str(dict["gender"])
         birthday = str(dict["birthday"])
         email = str(dict["email"])
-        password = str(dict["password"])
-        schedule = str(dict["schedule"])
-        if Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
+        schedule = dict["schedule"]
+
+        password = ""
+        if "password" in dict:
+            password = str(dict["password"])
+            contains_password = True
+        if contains_password and Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
                 and Player.is_birthday_valid(birthday) and Player.is_email(email) \
                 and Player.is_password_valid(password) \
                 and Player.schedule_exist(schedule):
             is_valid = True
-
+        elif Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
+                and Player.is_birthday_valid(birthday) and Player.is_email(email) \
+                and Player.schedule_exist(schedule):
+            is_valid = True
         return is_valid
 
     @staticmethod
@@ -320,3 +350,10 @@ class Player:
         password_encode_string = result.hexdigest()
         # printing the equivalent hexadecimal value.
         return password_encode_string
+
+    @staticmethod
+    def nickname_exist_to_update(nickname, email) -> bool:
+        query = "SELECT nickname FROM player WHERE nickname = %s AND email <> %s;"
+        values = [nickname, email]
+        result = ConnectionDataBase.select(query, values)
+        return len(result) > 0

@@ -93,9 +93,11 @@ class Player_game:
 
     def add_player(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        query = "CALL PA_register_player_game(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        query = "INSERT INTO player_game(accountLevel, game, hoursPlayed, note, personage, id_player, id_rank" \
+                ", rol, nickname) VALUES (%s, %s, %s, %s, %s, %s, %s, %s ,%s) ;"
         values = [self.accountLevel, self.game, self.hoursPlayed, self.note, self.persongage, self.id_player,
                   self.id_rank, self.rol, self.nickname]
+        print(values)
         if ConnectionDataBase.send_query(query, values):
             status = HTTPStatus.CREATED
         return status
@@ -326,3 +328,9 @@ class Player_game:
         birth = f"{yaer_to_born}/{month}/{day}"
         print(birth)
         return birth
+
+    def player_game_exist(self) -> bool:
+        query = "SELECT nickname from player_game where id_player = %s and game = %s"
+        values = [self.id_player, self.game]
+        result = ConnectionDataBase.select(query, values)
+        return len(result) > 0

@@ -34,6 +34,7 @@ def add():
 
 
 @report_routes.route("/report/players/<page>", methods=["GET"])
+@Auth.administrator_permission()
 def get_players_more_reported(page):
     response = Response(status=HTTPStatus.NOT_FOUND)
     page_str = str(page)
@@ -49,6 +50,7 @@ def get_players_more_reported(page):
 
 
 @report_routes.route("/players/<nickname>/reports", methods=["GET"])
+@Auth.administrator_permission()
 def get_reports_by_player(nickname):
     response = Response(status=HTTPStatus.NOT_FOUND)
     try:

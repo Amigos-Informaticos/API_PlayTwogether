@@ -32,7 +32,6 @@ def sign_up():
                     response = Response(status=status_from_model)
                 except (DatabaseError, InterfaceError) as e:
                     response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-                    print(e)
     return response
 
 
@@ -65,7 +64,6 @@ def login():
                     response = Response(status=result)
             except (DatabaseError, InterfaceError) as e:
                 response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-                print(e)
 
     return response
 
@@ -90,17 +88,34 @@ def is_admin():
 def update():
     response = Response(status=HTTPStatus.BAD_REQUEST)
     player_received = request.json
-    values_required = {"email", "password", "gender", "nickname", "schedule", "birthday"}
-    if all(key in player_received for key in values_required):
+    values_required_info_complete = {"email", "password", "gender", "nickname", "schedule", "birthday"}
+    values_required_without_password = {"email", "gender", "nickname", "schedule", "birthday"}
+    contains_info_complete = False
+    contains_info_without_password = False
+
+    if all(key in player_received for key in values_required_info_complete):
+        contains_info_complete = True
+    elif all(key in player_received for key in values_required_without_password):
+        contains_info_without_password = True
+
+    if contains_info_complete or contains_info_without_password:
+        email = player_received["email"]
+        nickname = player_received["nickname"]
         player = Player()
         try:
             if Player.validate_dict_to_singup(player_received):
                 player.instantiate_hashmap_to_update(player_received)
-                status_from_model = player.update()
+                status_from_model = HTTPStatus.NOT_FOUND
+                if contains_info_complete:
+                    status_from_model = player.update_all_information()
+                else:
+                    status_from_model = player.update_without_password()
                 response = Response(status=status_from_model)
         except (DatabaseError, InterfaceError) as e:
             response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
             print(e)
+
+
 
     return response
 
@@ -169,21 +184,26 @@ def ban_player(nickname):
 @Auth.requires_authentication_in_header()
 def add_image(nickname):
     image = request.files["image"]
-    response = Response(status=HTTPStatus.BAD_REQUEST)
-    saved = False
-    ftp_connection = FTP("amigosinformaticos.ddns.net")
-    ftp_connection.login("pi", "beethoven", "noaccount")
-    ftp_connection.cwd("playt")
-    command = f"STOR {nickname}.png"
-    try:
-        code = ftp_connection.storbinary(command, image.stream)
-        code = code.split(" ")[0]
-        if code == "226":
-            response = Response(status=HTTPStatus.CREATED)
-    except:
-        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-    finally:
-        ftp_connection.close()
+    if image.content_type == "image/png" or image.content_type == "image/jpeg":
+        ftp_connection = FTP("amigosinformaticos.ddns.net")
+        ftp_connection.login("pi", "beethoven", "noaccount")
+        ftp_connection.cwd("playt")
+        command = f"STOR {nickname}.png"
+        try:
+            code = ftp_connection.storbinary(command, image.stream)
+            code = code.split(" ")[0]
+            if code == "226":
+                response = Response(status=HTTPStatus.CREATED)
+            else:
+                response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        except (DatabaseError, InterfaceError) as e:
+            response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        finally:
+            ftp_connection.close()
+
+    else:
+        response = Response(status=HTTPStatus.BAD_REQUEST)
+
     return response
 
 
@@ -233,7 +253,7 @@ def search_players():
     response = Response(status=HTTPStatus.BAD_REQUEST)
     info = {}
     if request.args.__contains__("info_page"):
-        info["info_page"] = str (request.args.get("info_page"))
+        info["info_page"] = str(request.args.get("info_page"))
         if request.args.__contains__("nickname"):
             info["nickname"] = str(request.args.get("nickname"))
         else:
@@ -246,11 +266,13 @@ def search_players():
             if request.args.__contains__("game"):
                 info["game"] = str (request.args.get("game"))
 
-    if len(info) > 1:
-        if Player_game.has_at_least_one_attribute(info) and Player_game.validate_info_to_search_player(info):
+    try:
+        if Player_game.validate_info_to_search_player(info):
             result = Player_game.find_player_by_atributes(info)
             if len(result) > 0:
                 players_json = json.dumps(result)
                 response = Response(players_json, status=HTTPStatus.OK, mimetype="application/json")
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     return response
