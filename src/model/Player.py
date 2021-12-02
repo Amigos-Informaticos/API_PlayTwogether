@@ -342,6 +342,21 @@ class Player:
             })
         return player_json
 
+    def has_image(self) -> bool:
+        has_image = False
+        query = "SELECT has_image FROM player WHERE nickname = %s;"
+        values = [self.nickname]
+        result = ConnectionDataBase.select(query, values)
+        if len(result) > 0:
+            has_image = result[0]["has_image"]
+
+        return has_image
+
+    def add_image(self) :
+        query = "UPDATE player SET has_image = 1 WHERE nickname = %s;"
+        values = [self.nickname]
+        ConnectionDataBase.send_query(query,values)
+
     @staticmethod
     def encode_password(password: str) -> str:
         # encoding GeeksforGeeks using encode()

@@ -193,10 +193,13 @@ def add_image(nickname):
             code = ftp_connection.storbinary(command, image.stream)
             code = code.split(" ")[0]
             if code == "226":
+                player = Player()
+                player.nickname = nickname
+                player.add_image()
                 response = Response(status=HTTPStatus.CREATED)
             else:
                 response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        except (DatabaseError, InterfaceError) as e:
+        except (DatabaseError, InterfaceError, Exception) as e:
             response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
         finally:
             ftp_connection.close()
@@ -205,6 +208,23 @@ def add_image(nickname):
         response = Response(status=HTTPStatus.BAD_REQUEST)
 
     return response
+
+@rutas_player.route("/players/<nickname>/has_image", methods =["GET"])
+def has_image(nickname):
+    player = Player()
+    player.nickname = nickname
+    response = Response(status=HTTPStatus.NOT_FOUND)
+    try:
+
+        has_image = player.has_image()
+        if has_image == 1:
+            response = Response(status=HTTPStatus.OK)
+
+    except (DatabaseError, InterfaceError) as e:
+        response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    return response
+
 
 
 @rutas_player.route("/players/<nickname>/image", methods=["GET"])
