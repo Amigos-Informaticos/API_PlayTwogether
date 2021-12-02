@@ -223,7 +223,7 @@ class Player_game:
         base_query = "SELECT player.nickname, isVerified, birthday FROM player"
         query_game = " INNER JOIN player_game WHERE player_game.game = %s and player_game.id_player = player.player_id "
         query_gender = " player.gender = %s "
-        query_birthday = " player.birthday > %s "
+        query_birthday = " player.birthday <= %s "
         query_schedule = " player.schedule = %s "
         query_final = " LIMIT %s, 10"
         and_query = "AND"
@@ -256,7 +256,7 @@ class Player_game:
                     is_first_player_atribute = False
 
             if "min_age" in info:
-                age = info["min_age"]
+                age = int(info["min_age"])
                 birthday = Player_game.calculate_min_age(age)
                 values.append(birthday)
 
