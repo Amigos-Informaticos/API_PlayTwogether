@@ -178,7 +178,7 @@ class Player_game:
 
             if "nickname" in info:
                 nickname = str(info["nickname"])
-                is_valid = Player.is_nickname(nickname)
+                is_valid = not nickname.isspace()
             else:
                 if "gender" in info:
                     gender = str(info["gender"])
