@@ -255,18 +255,6 @@ def get_image(nickname):
     return response
 
 
-@rutas_player.route("/play", methods=["GET"])
-def play():
-
-    schedule = request.args.__contains__("schedule")
-
-    # info = request.json
-    response = Response(status=HTTPStatus.BAD_REQUEST)
-    # if Player_game.has_at_least_one_attribute(info) and Player_game.validate_info_to_search_player(info):
-    # Player_game.find_player_by_atributes(info)
-    # response = Response(status=HTTPStatus.OK)
-    return response
-
 
 @rutas_player.route("/players", methods=["GET"])
 def search_players():
