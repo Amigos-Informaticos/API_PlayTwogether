@@ -1,14 +1,10 @@
-import ftplib
 import io
 import json
 from ftplib import FTP
 from http import HTTPStatus
 from sqlite3 import DatabaseError, InterfaceError
 from tempfile import NamedTemporaryFile
-
 from flask import Blueprint, request, Response, session, send_file
-
-from src.model.Game import Game
 from src.model.Player import Player
 from src.model.Player_game import Player_game
 from src.services.Auth import Auth

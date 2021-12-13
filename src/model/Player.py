@@ -46,7 +46,6 @@ class Player:
         self.schedule = hashplayer_received["schedule"]
         self.birthday = hashplayer_received["birthday"]
 
-
     def make_to_json_login(self, token):
         return json.dumps({
             "nickname": self.nickname,
@@ -55,7 +54,7 @@ class Player:
             "token": token,
             "birthday": self.birthday.strftime('%Y-%m-%d'),
             "gender": self.gender,
-            "schedule" : self.schedule
+            "schedule": self.schedule
         })
 
     def make_json_players_found(self) -> dict:
@@ -106,20 +105,23 @@ class Player:
 
     def login(self) -> int:
         status = HTTPStatus.INTERNAL_SERVER_ERROR
-        query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
-        password_encode = Player.encode_password(self.password)
-        print(password_encode)
-        values = [self.email, password_encode]
-        result = ConnectionDataBase.select(query, values)
-        if len(result) > 0:
-            self.nickname = result[0]["nickname"]
-            self.isModerator = result[0]["isModerator"]
-            self.birthday = result[0]["birthday"]
-            self.gender = result[0]["gender"]
-            self.schedule = result[0]["schedule"]
-            status = HTTPStatus.OK
+        if Player.is_password_valid(self.password) and Player.is_email(self.email):
+            query = "SELECT * FROM player WHERE email = %s AND password = %s AND status = 1 ;"
+            password_encode = Player.encode_password(self.password)
+
+            values = [self.email, password_encode]
+            result = ConnectionDataBase.select(query, values)
+            if len(result) > 0:
+                self.nickname = result[0]["nickname"]
+                self.isModerator = result[0]["isModerator"]
+                self.birthday = result[0]["birthday"]
+                self.gender = result[0]["gender"]
+                self.schedule = result[0]["schedule"]
+                status = HTTPStatus.OK
+            else:
+                status = HTTPStatus.NOT_FOUND
         else:
-            status = HTTPStatus.NOT_FOUND
+            status = HTTPStatus.BAD_REQUEST
         return status
 
     def is_registered(self) -> bool:
@@ -260,24 +262,27 @@ class Player:
         return contains
 
     @staticmethod
-    def validate_dict_to_singup(dict) -> bool:
+    def validate_dict_to_singup(info) -> bool:
         is_valid = False
         contains_password = False
-        nickname = str(dict["nickname"])
-        gender = str(dict["gender"])
-        birthday = str(dict["birthday"])
-        email = str(dict["email"])
-        schedule = dict["schedule"]
+        nickname = str(info["nickname"])
+        gender = str(info["gender"])
+        birthday = str(info["birthday"])
+        email = str(info["email"])
+        schedule = info["schedule"]
 
         password = ""
-        if "password" in dict:
-            password = str(dict["password"])
+        if "password" in info:
+            password = str(info["password"])
             contains_password = True
-        if contains_password and Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
-                and Player.is_birthday_valid(birthday) and Player.is_email(email) \
-                and Player.is_password_valid(password) \
-                and Player.schedule_exist(schedule):
-            is_valid = True
+
+        if contains_password:
+            if Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
+                    and Player.is_birthday_valid(birthday) and Player.is_email(email) \
+                    and Player.is_password_valid(password) \
+                    and Player.schedule_exist(schedule):
+                is_valid = True
+
         elif Player.is_nickname(nickname) and Player.is_gender_valid(gender) \
                 and Player.is_birthday_valid(birthday) and Player.is_email(email) \
                 and Player.schedule_exist(schedule):
@@ -352,10 +357,10 @@ class Player:
 
         return has_image
 
-    def add_image(self) :
+    def add_image(self):
         query = "UPDATE player SET has_image = 1 WHERE nickname = %s;"
         values = [self.nickname]
-        ConnectionDataBase.send_query(query,values)
+        ConnectionDataBase.send_query(query, values)
 
     @staticmethod
     def encode_password(password: str) -> str:
