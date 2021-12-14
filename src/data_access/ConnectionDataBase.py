@@ -8,6 +8,7 @@ class ConnectionDataBase:
     def select(query, values):
         ConnectionDataBase.connection = EasyConnection()
         result = ConnectionDataBase.connection.select(query, values)
+        ConnectionDataBase.close_connection()
         return result
 
     @staticmethod
@@ -15,6 +16,7 @@ class ConnectionDataBase:
         sent = False
         ConnectionDataBase.connection = EasyConnection()
         ConnectionDataBase.connection.send_query(query, values)
+        ConnectionDataBase.close_connection()
         sent = True
         return sent
 
@@ -22,4 +24,3 @@ class ConnectionDataBase:
     def close_connection():
         if ConnectionDataBase.connection.connection is not None:
             ConnectionDataBase.connection.close_connection()
-            print("Conexion cerrada")

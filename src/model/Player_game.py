@@ -3,7 +3,6 @@ from datetime import date
 from http import HTTPStatus
 
 from src.data_access.ConnectionDataBase import ConnectionDataBase
-from src.data_access.EasyConnection import EasyConnection
 from src.model.Game import Game
 from src.model.Personage import Personage
 from src.model.Player import Player

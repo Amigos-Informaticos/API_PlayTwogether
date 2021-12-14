@@ -157,7 +157,6 @@ def get_player(nickname):
                                 mimetype="application/json")
     except (DatabaseError, InterfaceError) as e:
         response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
-        print(e)
     return response
 
 
