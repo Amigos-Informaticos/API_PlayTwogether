@@ -26,7 +26,7 @@ def sign_up():
                     player.instantiate_hashmap_to_register(player_recibido)
                     status_from_model = player.sign_up()
                     response = Response(status=status_from_model)
-                except (DatabaseError, InterfaceError) as e:
+                except (DatabaseError, InterfaceError, TimeoutError) as e:
                     response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
     return response
 
