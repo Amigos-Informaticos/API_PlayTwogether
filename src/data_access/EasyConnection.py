@@ -35,6 +35,7 @@ class EasyConnection:
             cursor.execute(query, parameters)
             self.connection.commit()
             executed = True
+            self.close_connection()
 
         return executed
 
@@ -51,4 +52,5 @@ class EasyConnection:
             tmp_results = cursor.fetchall()
             for row in tmp_results:
                 results.append(dict(zip(cursor.column_names, row)))
+            self.close_connection()
         return results
