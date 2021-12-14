@@ -125,7 +125,7 @@ def test_not_password_valid_short():
 
 
 def test_is_pasword_valid():
-    assert Player.is_password_valid("Holaaaaaaaa11")
+    assert not Player.is_password_valid("El7")
 
 
 def test_encryp_pass():

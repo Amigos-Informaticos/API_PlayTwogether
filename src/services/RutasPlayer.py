@@ -1,14 +1,10 @@
-import ftplib
 import io
 import json
 from ftplib import FTP
 from http import HTTPStatus
 from sqlite3 import DatabaseError, InterfaceError
 from tempfile import NamedTemporaryFile
-
 from flask import Blueprint, request, Response, session, send_file
-
-from src.model.Game import Game
 from src.model.Player import Player
 from src.model.Player_game import Player_game
 from src.services.Auth import Auth
@@ -254,18 +250,6 @@ def get_image(nickname):
 
     return response
 
-
-@rutas_player.route("/play", methods=["GET"])
-def play():
-
-    schedule = request.args.__contains__("schedule")
-
-    # info = request.json
-    response = Response(status=HTTPStatus.BAD_REQUEST)
-    # if Player_game.has_at_least_one_attribute(info) and Player_game.validate_info_to_search_player(info):
-    # Player_game.find_player_by_atributes(info)
-    # response = Response(status=HTTPStatus.OK)
-    return response
 
 
 @rutas_player.route("/players", methods=["GET"])
