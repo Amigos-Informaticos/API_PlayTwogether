@@ -17,9 +17,3 @@ class ConnectionDataBase:
         ConnectionDataBase.connection.send_query(query, values)
         sent = True
         return sent
-
-    @staticmethod
-    def close_connection():
-        if ConnectionDataBase.connection.connection is not None:
-            ConnectionDataBase.connection.close_connection()
-            print("Conexion cerrada")
