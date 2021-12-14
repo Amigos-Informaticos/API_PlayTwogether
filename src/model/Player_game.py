@@ -31,14 +31,25 @@ class Player_game:
         }
         return info
 
-
-
-
     def instantiate_hashmap_to_register(self, player_game_json) -> bool:
         response = False
         player = Player()
         player.email = player_game_json["email"]
-        if player.get_id() != -1:
+        personage = Personage()
+        personage.id = player_game_json["personage"]
+        personage.get_name()
+        rank = Rank()
+        rank.id = player_game_json["id_rank"]
+        rank.get_name()
+        rol = Rol()
+        rol.id = player_game_json["rol"]
+        rol.get_name()
+        hours = str(player_game_json["hoursPlayed"])
+        account_level = str(player_game_json["accountLevel"])
+
+        if player.get_id() != -1 and personage.name is not None and rank.name is not None and rol.name is not None and \
+                Player_game.is_time_to_play_valid(hours) and Player_game.is_level_valid(account_level):
+
             self.id_player = player.player_id
             self.accountLevel = player_game_json["accountLevel"]
             game = Game()
@@ -205,7 +216,6 @@ class Player_game:
 
         return is_valid
 
-
     @staticmethod
     def find_player_by_nickname(info) -> str:
         query = ""
@@ -299,7 +309,7 @@ class Player_game:
             for individual_player in result:
                 player_aux = Player()
                 player_aux.nickname = individual_player["nickname"]
-                player_aux.birthday = str (individual_player["birthday"])
+                player_aux.birthday = str(individual_player["birthday"])
                 player_aux.isVerified = individual_player["isVerified"]
                 players_found.append(player_aux.make_json_players_found())
 
@@ -334,3 +344,21 @@ class Player_game:
         values = [self.id_player, self.game]
         result = ConnectionDataBase.select(query, values)
         return len(result) > 0
+
+    @staticmethod
+    def is_time_to_play_valid(time: str) -> bool:
+        is_valid = False
+        if time.isdigit():
+            time_int = int(time)
+            if 0 < time_int < 2000:
+                is_valid = True
+        return is_valid
+
+    @staticmethod
+    def is_level_valid(level: str) -> bool:
+        is_valid = False
+        if level.isdigit():
+            level_int = int(level)
+            if 0 < level_int < 3000:
+                is_valid = True
+        return is_valid
