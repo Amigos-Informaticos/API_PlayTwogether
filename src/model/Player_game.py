@@ -120,7 +120,7 @@ class Player_game:
         player.nickname = nickname
         id_player = player.get_id_by_nickname()
         games_played = []
-        if id_player is not -1:
+        if id_player != -1:
             query = "SELECT accountLevel, enumRank.rankName, game.name FROM player_game INNER JOIN enumRank ON" \
                     " player_game.id_rank = enumRank.id INNER JOIN game ON player_game.game = game.id_game WHERE" \
                     " id_player = %s;"
@@ -221,7 +221,8 @@ class Player_game:
         if 'nickname' in info:
             nickname = info["nickname"]
             nickname_str = f"'%{nickname}%'"
-            query = f"SELECT nickname, isVerified, birthday FROM player  WHERE nickname LIKE {nickname_str} "
+            query = f"SELECT nickname, isVerified, birthday FROM player  WHERE nickname LIKE {nickname_str} " + "AND \
+            status = 1"
 
         return query
 
@@ -293,6 +294,11 @@ class Player_game:
                     base_query = base_query + where_query + query_schedule
                 elif not has_query_game and not is_first_player_atribute and "schedule" in info:
                     base_query = base_query + and_query + query_schedule
+
+            if is_first_player_atribute:
+                base_query = base_query + " WHERE status = 1 "
+            else:
+                base_query = base_query + "AND status = 1"
 
         base_query = base_query + query_final
         page_info = int(info["info_page"])
