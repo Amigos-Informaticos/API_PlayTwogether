@@ -273,7 +273,7 @@ class Player_game:
                 if has_query_game and "min_age" in info and not is_first_player_atribute:
                     base_query = base_query + and_query + query_birthday
                 elif has_query_game and "min_age" in info and is_first_player_atribute:
-                    base_query = base_query + where_query + query_birthday
+                    base_query = base_query + and_query + query_birthday
                     is_first_player_atribute = False
                 elif not has_query_game and "min_age" in info and is_first_player_atribute:
                     base_query = base_query + where_query + query_birthday
@@ -292,10 +292,11 @@ class Player_game:
                     is_first_player_atribute = False
                 elif not has_query_game and is_first_player_atribute and "schedule" in info:
                     base_query = base_query + where_query + query_schedule
+                    is_first_player_atribute = False
                 elif not has_query_game and not is_first_player_atribute and "schedule" in info:
                     base_query = base_query + and_query + query_schedule
 
-            if is_first_player_atribute:
+            if is_first_player_atribute and not has_query_game:
                 base_query = base_query + " WHERE status = 1 "
             else:
                 base_query = base_query + "AND status = 1"
