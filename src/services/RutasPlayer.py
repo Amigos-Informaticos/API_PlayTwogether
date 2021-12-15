@@ -179,7 +179,7 @@ def ban_player(nickname):
 @Auth.requires_authentication_in_header()
 def add_image(nickname):
     image = request.files["image"]
-    if image.content_type == "image/png" or image.content_type == "image/jpeg":
+    if image.content_type == "image/png" or image.content_type == "image/jpeg" or image.content_type == "image/jpg":
         ftp_connection = FTP("amigosinformaticos.ddns.net")
         ftp_connection.login("pi", "beethoven", "noaccount")
         ftp_connection.cwd("playt")
@@ -195,6 +195,7 @@ def add_image(nickname):
             else:
                 response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
         except (DatabaseError, InterfaceError, Exception) as e:
+            print(e)
             response = Response(status=HTTPStatus.INTERNAL_SERVER_ERROR)
         finally:
             ftp_connection.close()

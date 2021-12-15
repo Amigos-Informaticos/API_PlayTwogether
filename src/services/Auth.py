@@ -91,6 +91,9 @@ class Auth:
                 if token is not None:
                     values = Auth.decode_token(token)
                     if values is not None:
+                        email_header = request.headers.get("email")
+                        email_values = str(values["email"])
+
                         if request.headers.__contains__("email") and \
                                 str(request.headers.get("email")) == str(values["email"]):
                             response = operation(*args, **kwargs)

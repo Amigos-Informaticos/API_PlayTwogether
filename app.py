@@ -12,6 +12,7 @@ app.register_blueprint(game_routes)
 app.register_blueprint(report_routes)
 app.config["SECRET_KEY"] = "beethoven"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=120)
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024
 
 
 @app.route('/')
