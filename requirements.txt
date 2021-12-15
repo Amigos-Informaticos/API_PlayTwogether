@@ -26,6 +26,7 @@ mysql==0.0.3
 mysql-connector-python==8.0.26
 mysqlclient==2.0.3
 packaging==21.0
+path==16.2.0
 pluggy==1.0.0
 protobuf==3.18.0
 py==1.10.0
