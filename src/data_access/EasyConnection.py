@@ -1,13 +1,26 @@
+import json
+
 import mysql.connector
+from pathlib import Path
 
 
 class EasyConnection:
     def __init__(self):
-        self.user = "amigo"
-        self.password = "beethoven"
-        self.database = "playTwogether"
-        self.host = "amigosinformaticos.ddns.net"
+        self.user = ""
+        self.password = ""
+        self.database = ""
+        self.host = ""
+        self.init_with_json()
         self.connection = None
+
+    def init_with_json(self):
+        path = Path(__file__).parent / "./config.json"
+        file = open(path)
+        data = json.load(file)
+        self.user = data['user']
+        self.password = data['password']
+        self.database = data['database']
+        self.host = data['host']
 
     def connect(self, include_params: bool = False):
         self.connection = mysql.connector.connect(
